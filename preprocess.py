@@ -8,7 +8,6 @@ options:
     -h, --help              Show help message.
 """
 import os
-import random
 from docopt import docopt
 import numpy as np
 import math, pickle, os
@@ -18,7 +17,7 @@ from utils import *
 from tqdm import tqdm
 import librosa
 import librosa.feature
-import random
+import pickle
 
 def get_mel(path, preemp):
     wav = load_wav(path)
@@ -45,14 +44,8 @@ def process_data(mix_dir, vox_dir, output_path, mix_path, vox_path):
         np.save(os.path.join(mix_path,file_id+".npy"), mix_mel)
         np.save(os.path.join(vox_path,file_id+".npy"), vox_mel_slice)
     
-    random.shuffle(dataset_ids)
-    split = int(count*hp.train_test_split)
-    testset_ids = dataset_ids[:split]
-    trainset_ids = dataset_ids[split:]
-    with open(os.path.join(output_path,'trainset_ids.pkl'), 'wb') as f:
-        pickle.dump(trainset_ids, f)
-    with open(os.path.join(output_path,'testset_ids.pkl'), 'wb') as f:
-        pickle.dump(testset_ids, f)
+    with open(os.path.join(output_path,'dataset_ids.pkl'), 'wb') as f:
+        pickle.dump(dataset_ids, f)
 
 
 if __name__=="__main__":

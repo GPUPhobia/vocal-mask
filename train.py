@@ -11,13 +11,13 @@ from docopt import docopt
 
 import os
 from os.path import dirname, join, expanduser
+import random
 from tqdm import tqdm
 
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa
-
-from model import build_model
+import pickle
 
 import torch
 from torch import nn
@@ -25,7 +25,7 @@ import torch.nn.functional as F
 from torch import optim
 from torch.utils.data import DataLoader
 
-#from model import build_model
+from model import build_model
 from distributions import *
 from loss_function import nll_loss
 from dataset import basic_collate, SpectrogramDataset
@@ -180,8 +180,14 @@ if __name__=="__main__":
     # make dirs, load dataloader and set up device
     os.makedirs(checkpoint_dir, exist_ok=True)
     os.makedirs(os.path.join(checkpoint_dir,'eval'), exist_ok=True)
-    trainset = SpectrogramDataset(data_root, 'trainset_ids.pkl')
-    testset = SpectrogramDataset(data_root, 'testset_ids.pkl')
+    with open(os.path.join(data_root, 'dataset_ids.pkl'), 'rb') as f:
+        dataset_ids = pickle.load(f)
+    random.shuffle(dataset_ids)
+    split = int(len(dataset_ids)*hp.train_test_split)
+    test_ids = dataset_ids[:split]
+    train_ids = dataset_ids[split:]
+    trainset = SpectrogramDataset(data_root, train_ids)
+    testset = SpectrogramDataset(data_root, test_ids)
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
     testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=1)
     device = torch.device("cuda" if use_cuda else "cpu")
@@ -220,27 +226,5 @@ if __name__=="__main__":
     finally:
         print("saving model....")
         save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
-    
-
-def test_eval():
-    data_root = "data_dir"
-    dataset = AudiobookDataset(data_root)
-    if hp.input_type == 'raw':
-        collate_fn = raw_collate
-    elif hp.input_type == 'bits':
-        collate_fn = discrete_collate
-    else:
-        raise ValueError("input_type:{} not supported".format(hp.input_type))
-    data_loader = DataLoader(dataset, collate_fn=collate_fn, shuffle=True, num_workers=0, batch_size=hp.batch_size)
-    device = torch.device("cuda" if use_cuda else "cpu")
-    print("using device:{}".format(device))
-
-    # build model, create optimizer
-    model = build_model().to(device)
-
-    evaluate_model(model, data_loader)
-
-    
-
     
 
