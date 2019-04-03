@@ -9,6 +9,11 @@ import scipy
 import scipy.interpolate
 import numpy as np
 from hparams import hparams as hp
+import platform
+
+import matplotlib
+if platform.system() == 'Darwin':
+    matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
 mix_dir = sys.argv[1]
@@ -48,7 +53,6 @@ mixf = mixfs[idx]
 voxf = voxfs[idx]
 mix_wav = get_wav(os.path.join(mix_dir, mixf), preemp=PREEMPHASIS)
 mix_mel = get_spec(mix_wav, spec_type=SPEC_TYPE)
-print(mix_mel.shape)
 vox_wav = get_wav(os.path.join(vox_dir, voxf), preemp=PREEMPHASIS)
 vox_mel = get_spec(vox_wav, spec_type=SPEC_TYPE)
 
@@ -59,7 +63,7 @@ scaled = np.interp(vox_mel, (vox_min, vox_max), (0, 1))
 new_mel = mix_mel * scaled
 
 # Show spectrograms
-plt.figure(figsize=(24,20))
+plt.figure(figsize=(18,16))
 plt.subplot(131)
 plt.title('Mixture Spectrogram')
 show_spec(mix_mel, power_to_db=POWER, y_scale=Y_SCALE)
