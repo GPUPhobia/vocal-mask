@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from hparams import hparams as hp
+from audio import *
 from torch.utils.data import DataLoader, Dataset
 from distributions import *
 from utils import num_params, mulaw_quantize, inv_mulaw_quantize
@@ -27,6 +28,7 @@ class Model(nn.Module):
         self.fc1 = nn.Linear(1344, 64)
         self.bn5 = nn.BatchNorm1d(64)
         self.fc2 = nn.Linear(64, output_dims)
+        self.sigmoid = nn.Sigmoid()
         num_params(self)
     
     def forward(self, x):
@@ -43,14 +45,29 @@ class Model(nn.Module):
         x = self.bn5(F.leaky_relu(self.fc1(x)))
         x = self.dropout2(x)
         x = self.fc2(x)
+        x = self.sigmoid(x)
         return x
 
-    def generate(self, wav):
+    def generate(self, path):
         """Given a waveform, generate the vocal-only spectrogram slices.
         Another network will need to convert the spectrogram slices back
         into waveforms that can then be concatenated"""
 
-        pass
+        self.eval()
+        window = hp.hop_size*hp.stft_frame - 1
+        stride = hp.hop_size
+        wav = load_wav(path)
+        count = len(wav)
+        output = []
+        i = 0
+        while (i+window < count):
+            sample = wav[i:i+window]
+            x = melspectrogram(sample)
+            y = self.forward(x[np.newaxis,np.newaxis,:,:])
+            output.append(x[:,hp.stft_frames//2]*y)
+            i += stride
+        return np.stack(output).astype(np.float32)
+        
 
 def build_model():
     model = Model(1, hp.num_mels)

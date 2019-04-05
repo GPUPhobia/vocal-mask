@@ -107,7 +107,7 @@ def validation_step(device, model, testloader, criterion):
     running_loss = 0
     for i, (x, y) in enumerate(tqdm(testloader)):
         x, y = x.to(device), y.to(device)
-        y_pred = model(x)
+        y_pred = model(x) > 0.5
         loss = criterion(y_pred, y)
         running_loss += loss.item()
         avg_loss = running_loss / (i+1)
@@ -139,7 +139,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
         model.train()
         for i, (x, y) in enumerate(tqdm(trainloader)):
             x, y = x.to(device), y.to(device)
-            y_pred = model(x)
+            y_pred = model(x) > 0.5
             loss = criterion(y_pred, y)
 
             # calculate learning rate and update learning rate
@@ -188,8 +188,8 @@ if __name__=="__main__":
     train_ids = dataset_ids[split:]
     trainset = SpectrogramDataset(data_root, train_ids)
     testset = SpectrogramDataset(data_root, test_ids)
-    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
-    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=1)
+    trainloader = DataLoader(trainset, shuffle=True, num_workers=0, batch_size=hp.batch_size)
+    testloader = DataLoader(testset, shuffle=True, num_workers=0, batch_size=1)
     device = torch.device("cuda" if use_cuda else "cpu")
     print("using device:{}".format(device))
 

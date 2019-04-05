@@ -1,5 +1,6 @@
 import librosa
 import librosa.effects
+import librosa.feature
 import librosa.filters
 import math
 import numpy as np
@@ -33,6 +34,9 @@ def save_wav(wav, path):
     wav = wav * 32767 / max(0.01, np.max(np.abs(wav)))
     wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
 
+def get_mel(path):
+    wav = load_wav(path)
+    return melspectrogram(wav)
 
 def preemphasis(x):
     from nnmnkwii.preprocessing import preemphasis
@@ -68,7 +72,7 @@ def melspectrogram(y):
 
 
 def _lws_processor():
-    return lws.lws(hparams.fft_size, hparams.hop_size, mode="speech")
+    return lws.lws(hparams.fft_size, hparams.hop_size, mode=hparams.lws_mode)
 
 
 # Conversions:

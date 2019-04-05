@@ -15,16 +15,8 @@ from audio import *
 from hparams import hparams as hp
 from utils import *
 from tqdm import tqdm
-import librosa
-import librosa.feature
 import pickle
 
-def get_mel(path, preemp):
-    wav = load_wav(path)
-    if preemp:
-        wav = preemphasis(wav)
-    return librosa.feature.melspectrogram(y=wav, sr=hp.sample_rate,
-        n_fft=hp.fft_size, hop_length=hp.hop_size, n_mels=hp.num_mels)
 
 def process_data(mix_dir, vox_dir, output_path, mix_path, vox_path): 
     dataset_ids = []
@@ -33,16 +25,22 @@ def process_data(mix_dir, vox_dir, output_path, mix_path, vox_path):
     count = len(mix_wavf)
     for i in tqdm(range(count)):
         file_id = f"{i:06d}"
-        mix_mel = get_mel(os.path.join(mix_dir, mix_wavf[i]), 
-                          hp.use_preemphasis)
-        mix_mel = [np.newaxis,:,:] # single channel
-        vox_mel = get_mel(os.path.join(vox_dir, vox_wavf[i]), 
-                          hp.use_preemphasis)
+
+        # convert wav to spectrogram for mixture
+        mix_wav = load_wav(os.path.join(mix_dir, mix_wavf[i]))
+        mix_spec = melspectrogram(mix_wav)
+        mix_spec = mix_spec[np.newaxis,:,:] # single channel
+        
+        # convert wav to spectrogram for vocal
+        vox_wav = load_wav(os.path.join(vox_dir, vox_wavf[i]))
+        vox_spec = melspectrogram(vox_wav)
         # we only want to predict the middle frame of vocal spectrogram
-        vox_mel_slice = vox_mel[:,hp.stft_frames//2]
+        vox_spec = vox_spec[:,hp.stft_frames//2]
+
+        # save output
         dataset_ids.append(file_id)
-        np.save(os.path.join(mix_path,file_id+".npy"), mix_mel)
-        np.save(os.path.join(vox_path,file_id+".npy"), vox_mel_slice)
+        np.save(os.path.join(mix_path,file_id+".npy"), mix_spec)
+        np.save(os.path.join(vox_path,file_id+".npy"), vox_spec)
     
     with open(os.path.join(output_path,'dataset_ids.pkl'), 'wb') as f:
         pickle.dump(dataset_ids, f)

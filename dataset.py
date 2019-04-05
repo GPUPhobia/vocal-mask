@@ -18,20 +18,17 @@ class SpectrogramDataset(Dataset):
         file_id = self.metadata[index]
         x = np.load(os.path.join(self.mix_path, f"{file_id}.npy"))
         y = np.load(os.path.join(self.vox_path, f"{file_id}.npy"))
-        return x, y
+        return x, (y > 0.5)
 
     def __len__(self):
         return len(self.metadata)
 
 
-def scale_vector(arr, low, high):
-    return np.interp(arr, (arr.min(), arr.max()), (low, high))
-
 def basic_collate(batch):
     x = [it[0] for it in batch]
     x = np.stack(x).astype(np.float32)
     x = torch.FloatTensor(x)
-    y = [scale_vector(it[1], 0, 1) for it in batch]
+    y = [scale_vector(it[1], 0, 0, 1) for it in batch]
     y = np.stack(y).astype(np.float32)
     y = torch.FloatTensor(y)
     return x, y

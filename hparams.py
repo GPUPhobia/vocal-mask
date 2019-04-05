@@ -3,6 +3,8 @@ class hparams:
     #--------------     
     # audio processing parameters
     num_mels = 256
+    fmin = 125
+    fmax = 11025
     fft_size = 1024
     stft_frames = 25
     stft_stride = 1
@@ -13,6 +15,7 @@ class hparams:
     preemphasis = 0.97
     min_level_db = -100
     ref_level_db = 20
+    lws_mode = 'speech' # alternatively 'music'
     rescaling = False
     rescaling_max = 0.999
     allow_clipping_in_normalization = True
