@@ -29,7 +29,7 @@ def slice_wav(wav, window, stride):
 
 def get_wav_slices(wav, window, stride):
     N = len(wav)
-    return [(i,i+window) for i in range(0, N-window, window)]
+    return [(i,i+window) for i in range(0, N-window, stride)]
 
 def sum_wavs(*wavs):
     return np.sum(wavs, axis=0)

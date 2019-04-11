@@ -7,7 +7,7 @@ class hparams:
     fmax = 11025
     fft_size = 1024
     stft_frames = 25
-    stft_stride = 6
+    stft_stride = 12
     hop_size = 256
     win_length = 1024
     sample_rate = 22050
