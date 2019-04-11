@@ -56,11 +56,6 @@ def show_spec(spec):
         y_scale = 'mel'
     librosa.display.specshow(spec, y_axis=y_scale, x_axis='time')
 
-def sigmoid(x):
-    #z = np.exp(x-np.max(x))
-    #return z/(1+z)
-    return scipy.special.expit(x)
-
 mixf = mixfs[idx]
 voxf = voxfs[idx]
 mix_wav = get_wav(os.path.join(mix_dir, mixf), preemp=PREEMPHASIS)

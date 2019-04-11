@@ -21,17 +21,17 @@ stride = hp.hop_size*hp.stft_stride
 print("slicing mixture samples")
 for f in tqdm(input_files):
     wav = load_wav(os.path.join(input_dir, f, "mixture.wav"))
-    wavs = slice_wav(wav, window, stride)
-    for wav in wavs:
+    slices = get_wav_slices(wav, window, stride)
+    for j,k in slices:
         fname = f"{i:06d}.wav"
-        save_wav(wav, os.path.join(mixture_path, fname))
+        save_wav(wav[j:k], os.path.join(mixture_path, fname))
         i += 1
 i = 0
 print("slicing vocal samples")
 for f in tqdm(target_files):
     wav = load_wav(os.path.join(target_dir, f, "vocals.wav"))
-    wavs = slice_wav(wav, window, stride)
-    for wav in wavs:
+    slices = get_wav_slices(wav, window, stride)
+    for j,k in slices:
         fname = f"{i:06d}.wav"
-        save_wav(wav, os.path.join(vocal_path, fname))
+        save_wav(wav[j:k], os.path.join(vocal_path, fname))
         i += 1

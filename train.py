@@ -1,6 +1,6 @@
 """Training WaveRNN Model.
 
-usage: train.py [options] <data-root>
+usage: train.py [options] <data-root> <eval-dir>
 
 options:
     --checkpoint-dir=<dir>      Directory where to save model checkpoints [default: checkpoints].
@@ -17,6 +17,7 @@ from tqdm import tqdm
 import numpy as np
 import matplotlib.pyplot as plt
 import librosa
+import librosa.display
 import pickle
 
 import torch
@@ -25,8 +26,8 @@ import torch.nn.functional as F
 from torch import optim
 from torch.utils.data import DataLoader
 
+from audio import melspectrogram
 from model import build_model
-from distributions import *
 from loss_function import nll_loss
 from dataset import basic_collate, SpectrogramDataset
 from hparams import hparams as hp
@@ -92,12 +93,21 @@ def test_save_checkpoint():
     model = load_checkpoint(checkpoint_path+"checkpoint_step000000000.pth", model, optimizer, False)
 
 
-def evaluate_model(model, dataloader, checkpoint_dir, limit_eval_to=5):
+def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
     """evaluate model by generating sample spectrograms
 
     """
+    files = os.listdir(path)
+    random.shuffle(files)
+    print("Evaluating model...")
+    for f in tqdm(files[:4]):
+        spec = model.generate(device, os.path.join(path,f,'mixture.wav'), 200)
+        file_id = f.split()[0]
+        fig_path = os.path.join(checkpoint_dir, 'eval', f'epoch_{global_epoch:06d}_vox_spec_{file_id}.png')
+        librosa.display.specshow(spec, y_axis='mel', x_axis='time')
+        plt.savefig(fig_path)
+        plt.clf()
     
-    pass
 
 def validation_step(device, model, testloader, criterion):
     """check loss on validation set
@@ -107,7 +117,9 @@ def validation_step(device, model, testloader, criterion):
     running_loss = 0
     for i, (x, y) in enumerate(tqdm(testloader)):
         x, y = x.to(device), y.to(device)
-        y_pred = model(x) > 0.5
+        y_pred = model(x)
+        if hp.y_tsfm is not None:
+            y_pred = y_pred > hp.y_tsfm
         loss = criterion(y_pred, y)
         running_loss += loss.item()
         avg_loss = running_loss / (i+1)
@@ -126,12 +138,12 @@ def get_learning_rate(global_step):
     return current_lr
 
 
-def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_dir):
+def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_dir, eval_dir):
     """Main training loop.
 
     """
     criterion = torch.nn.MSELoss()
-    
+    #criterion = torch.nn.BCELoss()
 
     global global_step, global_epoch, global_test_step
     while global_epoch < hp.nepochs:
@@ -139,7 +151,9 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
         model.train()
         for i, (x, y) in enumerate(tqdm(trainloader)):
             x, y = x.to(device), y.to(device)
-            y_pred = model(x) > 0.5
+            y_pred = model(x)
+            if hp.y_tsfm is not None:
+                y_pred = y_pred > hp.y_tsfm
             loss = criterion(y_pred, y)
 
             # calculate learning rate and update learning rate
@@ -158,11 +172,13 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             avg_loss = running_loss / (i+1)
             global_step += 1
 
+        avg_valid_loss = validation_step(device, model, testloader, criterion)
         # save checkpoint
         if global_epoch != 0 and global_epoch % hp.save_every_epoch == 0:
             save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
+        if global_epoch != 0 and global_epoch % hp.eval_every_epoch == 0:
+            evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
     
-        avg_valid_loss = validation_step(device, model, testloader, criterion)
         print("epoch:{}, lr:{}, running loss:{}, avg train loss:{}, avg valid loss:{}".format(
             global_epoch, current_lr, running_loss, 
             avg_loss, avg_valid_loss)
@@ -176,6 +192,7 @@ if __name__=="__main__":
     checkpoint_dir = args["--checkpoint-dir"]
     checkpoint_path = args["--checkpoint"]
     data_root = args["<data-root>"]
+    eval_dir = args["<eval-dir>"]
 
     # make dirs, load dataloader and set up device
     os.makedirs(checkpoint_dir, exist_ok=True)
@@ -188,8 +205,8 @@ if __name__=="__main__":
     train_ids = dataset_ids[split:]
     trainset = SpectrogramDataset(data_root, train_ids)
     testset = SpectrogramDataset(data_root, test_ids)
-    trainloader = DataLoader(trainset, shuffle=True, num_workers=0, batch_size=hp.batch_size)
-    testloader = DataLoader(testset, shuffle=True, num_workers=0, batch_size=1)
+    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
+    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=1)
     device = torch.device("cuda" if use_cuda else "cpu")
     print("using device:{}".format(device))
 
@@ -219,7 +236,7 @@ if __name__=="__main__":
 
     # main train loop
     try:
-        train_loop(device, model, trainloader, testloader, optimizer, checkpoint_dir)
+        train_loop(device, model, trainloader, testloader, optimizer, checkpoint_dir, eval_dir)
     except KeyboardInterrupt:
         print("Interrupted!")
         pass

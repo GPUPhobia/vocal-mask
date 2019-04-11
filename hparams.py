@@ -7,7 +7,7 @@ class hparams:
     fmax = 11025
     fft_size = 1024
     stft_frames = 25
-    stft_stride = 1
+    stft_stride = 6
     hop_size = 256
     win_length = 1024
     sample_rate = 22050
@@ -36,13 +36,15 @@ class hparams:
     compute_dims = 128
     res_out_dims = 128
     res_blocks = 10
+    y_tsfm = None
     #----------------
     #
     #----------------
     # training parameters
-    batch_size = 32
-    nepochs = 100
+    batch_size = 64
+    nepochs = 106
     save_every_epoch = 5
+    eval_every_epoch = 5
     train_test_split = 0.1 # reserve 10% of data for validation
     # seq_len_factor can be adjusted to increase training sequence length (will increase GPU usage)
     seq_len_factor = 5
