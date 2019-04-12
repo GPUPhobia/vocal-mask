@@ -16,19 +16,15 @@ if platform.system() == 'Darwin':
     matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 
-mix_dir = sys.argv[1]
-vox_dir = sys.argv[2]
-idx = int(sys.argv[3])
+eval_dir = sys.argv[1]
+idx = int(sys.argv[2])
 
-
-mixfs = os.listdir(mix_dir)
-voxfs = os.listdir(vox_dir)
-start = hp.hop_size*hp.stft_frames*40 + 24
-end = start + hp.hop_size*200 - 24
+mix_dir = os.path.join(eval_dir, 'mix')
+vox_dir = os.path.join(eval_dir, 'vox')
 
 def get_wav(path):
     wav = load_wav(path)
-    return wav[start:end]
+    return wav
 
 def get_spec(wav):
     return melspectrogram(wav)
@@ -36,11 +32,10 @@ def get_spec(wav):
 def show_spec(spec):
     librosa.display.specshow(spec, y_axis='mel', x_axis='time')
 
-mixf = next(f for f in mixfs if int(f[:3]) == idx)
-voxf = next(f for f in voxfs if int(f[:3]) == idx)
-mix_wav = get_wav(os.path.join(mix_dir, mixf, 'mixture.wav'))
+fname = f"eval{idx:06d}.wav"
+mix_wav = get_wav(os.path.join(mix_dir, fname))
 mix_mel = get_spec(mix_wav)
-vox_wav = get_wav(os.path.join(vox_dir, voxf, 'vocals.wav'))
+vox_wav = get_wav(os.path.join(vox_dir, fname))
 vox_mel = get_spec(vox_wav)
 
 # Show spectrograms

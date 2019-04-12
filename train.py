@@ -101,8 +101,8 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
     random.shuffle(files)
     print("Evaluating model...")
     for f in tqdm(files[:4]):
-        spec = model.generate(device, os.path.join(path,f,'mixture.wav'), 200)
-        file_id = f.split()[0]
+        spec = model.generate(device, os.path.join(path,f))
+        file_id = f.split(".")[0]
         fig_path = os.path.join(checkpoint_dir, 'eval', f'epoch_{global_epoch:06d}_vox_spec_{file_id}.png')
         librosa.display.specshow(spec, y_axis='mel', x_axis='time')
         plt.savefig(fig_path)
@@ -206,7 +206,7 @@ if __name__=="__main__":
     trainset = SpectrogramDataset(data_root, train_ids)
     testset = SpectrogramDataset(data_root, test_ids)
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
-    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=1)
+    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
     device = torch.device("cuda" if use_cuda else "cpu")
     print("using device:{}".format(device))
 

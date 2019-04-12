@@ -4,7 +4,7 @@ class hparams:
     # audio processing parameters
     num_mels = 256
     fmin = 125
-    fmax = 11025
+    fmax = 8192
     fft_size = 1024
     stft_frames = 25
     stft_stride = 12
@@ -21,28 +21,19 @@ class hparams:
     allow_clipping_in_normalization = True
     trim = False # whether to cut silence from the ends of the waveform
     trim_thresh = 80 # how much below max db to trim waveform
-    mixture_fname = "mixture.wav"
-    vocal_fname = "vocals.wav"
+    eval_length = sample_rate*2  # slice size for evaluation samples
     #----------------
     #
     #----------------
     # model parameters
-    rnn_dims = 800
-    fc_dims = 512
-    pad = 2
-    # note upsample factors must multiply out to be equal to hop_size, so adjust
-    # if necessary (i.e 4 x 4 x 16 = 256)
-    upsample_factors = (4, 4, 16)
-    compute_dims = 128
-    res_out_dims = 128
-    res_blocks = 10
+    res_dims = [16, 16, 32, 32, 64, 64, 128, 128]
     y_tsfm = None
     #----------------
     #
     #----------------
     # training parameters
     batch_size = 64
-    nepochs = 106
+    nepochs = 100
     save_every_epoch = 5
     eval_every_epoch = 5
     train_test_split = 0.1 # reserve 10% of data for validation

@@ -28,17 +28,15 @@ def process_data(mix_dir, vox_dir, output_path, mix_path, vox_path):
 
         # convert wav to spectrogram for mixture
         mix_wav = load_wav(os.path.join(mix_dir, mix_wavf[i]))
-        if np.sum(mix_wav) == 0:
-            # skip examples with no waveform content
-            continue
         mix_spec = melspectrogram(mix_wav)
         mix_spec = mix_spec[np.newaxis,:,:] # single channel
         
         # convert wav to spectrogram for vocal
         vox_wav = load_wav(os.path.join(vox_dir, vox_wavf[i]))
         vox_spec = melspectrogram(vox_wav)
+        width = vox_spec.shape[1]
         # we only want to predict the middle frame of vocal spectrogram
-        vox_spec = vox_spec[:,hp.stft_frames//2]
+        vox_spec = vox_spec[:,width//2]
 
         # save output
         dataset_ids.append(file_id)
