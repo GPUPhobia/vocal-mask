@@ -30,7 +30,7 @@ def basic_collate(batch):
     x = torch.FloatTensor(x)
     y = [it[1] for it in batch]
     y = np.stack(y).astype(np.float32)
-    if hp.y_tsfm is not None:
-        y = y > hp.y_tsfm
+    if hp.mask_threshold is not None:
+        y = y > hp.mask_threshold
     y = torch.FloatTensor(y)
     return x, y

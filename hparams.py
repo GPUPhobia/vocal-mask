@@ -2,7 +2,7 @@ class hparams:
 
     #--------------     
     # audio processing parameters
-    num_mels = 256
+    num_mels = 128
     fmin = 125
     fmax = 8192
     fft_size = 1024
@@ -15,7 +15,7 @@ class hparams:
     preemphasis = 0.97
     min_level_db = -100
     ref_level_db = 20
-    lws_mode = 'speech' # alternatively 'music'
+    lws_mode = 'music' # speech or music
     rescaling = False
     rescaling_max = 0.999
     allow_clipping_in_normalization = True
@@ -27,15 +27,18 @@ class hparams:
     #----------------
     # model parameters
     res_dims = [16, 16, 32, 32, 64, 64, 128, 128]
-    y_tsfm = None
+    # convert target spectrogram to mask at this activity threshold
+    mask_threshold = 0.3
+    # convert output to binary mask at inference time
+    mask_at_eval = False
     #----------------
     #
     #----------------
     # training parameters
-    batch_size = 64
+    batch_size = 32
     nepochs = 100
-    save_every_epoch = 5
-    eval_every_epoch = 5
+    save_every_epoch = 2
+    eval_every_epoch = 2
     train_test_split = 0.1 # reserve 10% of data for validation
     # seq_len_factor can be adjusted to increase training sequence length (will increase GPU usage)
     seq_len_factor = 5

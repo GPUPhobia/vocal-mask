@@ -58,9 +58,9 @@ class Model(nn.Module):
             else:
                 self.resnet_layers.append(ResSkipBlock(dilations[i], size))
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.fcdims = dilations[-1]*np.product(input_dims)//4
-        self.dropout1 = nn.Dropout(p=0.5)
+        self.dropout1 = nn.Dropout(p=0.25)
         self.dropout2 = nn.Dropout(p=0.5)
+        self.fcdims = dilations[-1]*np.product(input_dims)//4
         self.fc1 = nn.Linear(self.fcdims, 128)
         self.bn1 = nn.BatchNorm1d(128)
         self.fc2 = nn.Linear(128, output_dims)
@@ -102,10 +102,8 @@ class Model(nn.Module):
             _x = _x.to(device)
             _y = self.forward(_x)
             y = _y.to(torch.device('cpu')).detach().numpy()
-            if hp.y_tsfm is not None:
-                y = y > hp.y_tsfm
-            #else:
-            #    z = y
+            if hp.mask_at_eval:
+                y = y > 0.5
             width = x.shape[1]
             z = x[:,width//2]*y
             output.append(z)

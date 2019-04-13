@@ -100,7 +100,7 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
     files = os.listdir(path)
     random.shuffle(files)
     print("Evaluating model...")
-    for f in tqdm(files[:4]):
+    for f in tqdm(files[:5]):
         spec = model.generate(device, os.path.join(path,f))
         file_id = f.split(".")[0]
         fig_path = os.path.join(checkpoint_dir, 'eval', f'epoch_{global_epoch:06d}_vox_spec_{file_id}.png')
@@ -118,8 +118,7 @@ def validation_step(device, model, testloader, criterion):
     for i, (x, y) in enumerate(tqdm(testloader)):
         x, y = x.to(device), y.to(device)
         y_pred = model(x)
-        if hp.y_tsfm is not None:
-            y_pred = y_pred > hp.y_tsfm
+        y_pred = y_pred > 0.5
         loss = criterion(y_pred, y)
         running_loss += loss.item()
         avg_loss = running_loss / (i+1)
@@ -152,8 +151,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
         for i, (x, y) in enumerate(tqdm(trainloader)):
             x, y = x.to(device), y.to(device)
             y_pred = model(x)
-            if hp.y_tsfm is not None:
-                y_pred = y_pred > hp.y_tsfm
+            y_pred = y_pred > 0.5
             loss = criterion(y_pred, y)
 
             # calculate learning rate and update learning rate
@@ -172,12 +170,14 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             avg_loss = running_loss / (i+1)
             global_step += 1
 
+        # Validation
         avg_valid_loss = validation_step(device, model, testloader, criterion)
+        # Evaluation
+        if global_epoch != 0 and global_epoch % hp.eval_every_epoch == 0:
+            evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
         # save checkpoint
         if global_epoch != 0 and global_epoch % hp.save_every_epoch == 0:
             save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
-        if global_epoch != 0 and global_epoch % hp.eval_every_epoch == 0:
-            evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
     
         print("epoch:{}, lr:{}, running loss:{}, avg train loss:{}, avg valid loss:{}".format(
             global_epoch, current_lr, running_loss, 
@@ -206,7 +206,7 @@ if __name__=="__main__":
     trainset = SpectrogramDataset(data_root, train_ids)
     testset = SpectrogramDataset(data_root, test_ids)
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
-    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
+    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=4)
     device = torch.device("cuda" if use_cuda else "cpu")
     print("using device:{}".format(device))
 

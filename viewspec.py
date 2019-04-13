@@ -37,16 +37,25 @@ mix_wav = get_wav(os.path.join(mix_dir, fname))
 mix_mel = get_spec(mix_wav)
 vox_wav = get_wav(os.path.join(vox_dir, fname))
 vox_mel = get_spec(vox_wav)
+vox_mask = vox_mel > hp.mask_threshold
 
 # Show spectrograms
 plt.figure()
-plt.subplot(121)
+plt.subplot(221)
 plt.title('Mixture Spectrogram')
 show_spec(mix_mel)
 
-plt.subplot(122)
+plt.subplot(222)
 plt.title('Vocal Spectrogram')
 show_spec(vox_mel)
+
+plt.subplot(223)
+plt.title('Vocal Mask')
+show_spec(vox_mask)
+
+plt.subplot(224)
+plt.title('Masked Mixture')
+show_spec(mix_mel*vox_mask)
 
 plt.tight_layout()
 plt.show()
