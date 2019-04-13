@@ -26,7 +26,7 @@ import torch.nn.functional as F
 from torch import optim
 from torch.utils.data import DataLoader
 
-from audio import melspectrogram
+from audio import load_wav, melspectrogram, show_spec
 from model import build_model
 from loss_function import nll_loss
 from dataset import basic_collate, SpectrogramDataset
@@ -97,14 +97,38 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
     """evaluate model by generating sample spectrograms
 
     """
-    files = os.listdir(path)
+
+    mix_path = os.path.join(path, "mix")
+    vox_path = os.path.join(path, "vox")
+    files = os.listdir(mix_path)
     random.shuffle(files)
     print("Evaluating model...")
-    for f in tqdm(files[:5]):
-        spec = model.generate(device, os.path.join(path,f))
+    for f in tqdm(files[:hp.num_evals]):
+        gen_spec, mask = model.generate(device, os.path.join(mix_path,f))
+        mix_wav = load_wav(os.path.join(mix_path,f))
+        mix_spec = melspectrogram(mix_wav)
+        vox_wav = load_wav(os.path.join(vox_path,f))
+        vox_spec = melspectrogram(vox_wav)
         file_id = f.split(".")[0]
         fig_path = os.path.join(checkpoint_dir, 'eval', f'epoch_{global_epoch:06d}_vox_spec_{file_id}.png')
-        librosa.display.specshow(spec, y_axis='mel', x_axis='time')
+        plt.figure()
+        plt.subplot(221)
+        plt.title("Mixture")
+        show_spec(mix_spec)
+
+        plt.subplot(222)
+        plt.title("Ground Truth Vocal")
+        show_spec(vox_spec)
+
+        plt.subplot(223)
+        plt.title("Generated Mask")
+        show_spec(mask)
+
+        plt.subplot(224)
+        plt.title("Applied Mask")
+        show_spec(gen_spec)
+
+        plt.tight_layout()
         plt.savefig(fig_path)
         plt.clf()
     
@@ -118,7 +142,6 @@ def validation_step(device, model, testloader, criterion):
     for i, (x, y) in enumerate(tqdm(testloader)):
         x, y = x.to(device), y.to(device)
         y_pred = model(x)
-        y_pred = y_pred > 0.5
         loss = criterion(y_pred, y)
         running_loss += loss.item()
         avg_loss = running_loss / (i+1)
@@ -141,8 +164,9 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
     """Main training loop.
 
     """
-    criterion = torch.nn.MSELoss()
-    #criterion = torch.nn.BCELoss()
+    #criterion = torch.nn.MSELoss()
+    criterion = torch.nn.BCELoss()
+    #criterion = torch.nn.BCEWithLogitsLoss()
 
     global global_step, global_epoch, global_test_step
     while global_epoch < hp.nepochs:
@@ -151,7 +175,6 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
         for i, (x, y) in enumerate(tqdm(trainloader)):
             x, y = x.to(device), y.to(device)
             y_pred = model(x)
-            y_pred = y_pred > 0.5
             loss = criterion(y_pred, y)
 
             # calculate learning rate and update learning rate
@@ -173,7 +196,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
         # Validation
         avg_valid_loss = validation_step(device, model, testloader, criterion)
         # Evaluation
-        if global_epoch != 0 and global_epoch % hp.eval_every_epoch == 0:
+        if global_epoch % hp.eval_every_epoch == 0:
             evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
         # save checkpoint
         if global_epoch != 0 and global_epoch % hp.save_every_epoch == 0:

@@ -42,6 +42,9 @@ def get_mel(path):
     wav = load_wav(path)
     return melspectrogram(wav)
 
+def show_spec(spec):
+    librosa.display.specshow(spec, y_axis='mel', x_axis='time')
+
 def preemphasis(x):
     from nnmnkwii.preprocessing import preemphasis
     return preemphasis(x, hparams.preemphasis)

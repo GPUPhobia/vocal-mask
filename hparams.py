@@ -30,7 +30,7 @@ class hparams:
     # convert target spectrogram to mask at this activity threshold
     mask_threshold = 0.3
     # convert output to binary mask at inference time
-    mask_at_eval = False
+    mask_at_eval = True
     #----------------
     #
     #----------------
@@ -39,6 +39,7 @@ class hparams:
     nepochs = 100
     save_every_epoch = 2
     eval_every_epoch = 2
+    num_evals = 4  # number of evals to generate
     train_test_split = 0.1 # reserve 10% of data for validation
     # seq_len_factor can be adjusted to increase training sequence length (will increase GPU usage)
     seq_len_factor = 5

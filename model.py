@@ -94,6 +94,7 @@ class Model(nn.Module):
         count = len(wav)
         i = 0
         output = []
+        mask = []
         while (i+window <= count):
             sample = wav[i:i+window]
             x = melspectrogram(sample)
@@ -107,8 +108,9 @@ class Model(nn.Module):
             width = x.shape[1]
             z = x[:,width//2]*y
             output.append(z)
+            mask.append(y)
             i += stride
-        return np.stack(output).astype(np.float32).T[:,0,:]
+        return np.stack(output).astype(np.float32).T[:,0,:], np.stack(mask).astype(np.float32).T[:,0,:]
         
 
 def build_model():

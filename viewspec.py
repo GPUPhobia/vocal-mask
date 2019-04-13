@@ -29,9 +29,6 @@ def get_wav(path):
 def get_spec(wav):
     return melspectrogram(wav)
 
-def show_spec(spec):
-    librosa.display.specshow(spec, y_axis='mel', x_axis='time')
-
 fname = f"eval{idx:06d}.wav"
 mix_wav = get_wav(os.path.join(mix_dir, fname))
 mix_mel = get_spec(mix_wav)
