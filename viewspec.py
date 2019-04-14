@@ -27,14 +27,21 @@ def get_wav(path):
     return wav
 
 def get_spec(wav):
-    return melspectrogram(wav)
+    #return melspectrogram(wav)
+    return spectrogram(wav)
+
+def inv_spec(spec):
+    return inv_spectrogram(spec)
 
 fname = f"eval{idx:06d}.wav"
 mix_wav = get_wav(os.path.join(mix_dir, fname))
-mix_mel = get_spec(mix_wav)
+mix_mel, mix_spec = get_spec(mix_wav)
 vox_wav = get_wav(os.path.join(vox_dir, fname))
-vox_mel = get_spec(vox_wav)
+vox_mel, vox_spec = get_spec(vox_wav)
 vox_mask = vox_mel > hp.mask_threshold
+gen_vox = mix_spec*vox_mask
+wav = inv_spec(gen_vox)
+save_wav(wav, 'test.wav')
 
 # Show spectrograms
 plt.figure()

@@ -2,9 +2,9 @@ class hparams:
 
     #--------------     
     # audio processing parameters
-    num_mels = 128
+    num_mels = 280
     fmin = 125
-    fmax = 8192
+    fmax = 11025
     fft_size = 1024
     stft_frames = 25
     stft_stride = 12
@@ -13,9 +13,10 @@ class hparams:
     sample_rate = 22050
     use_preemphasis = True # apply preemphasis transformation to waveform
     preemphasis = 0.97
+    power = 2
     min_level_db = -100
     ref_level_db = 20
-    lws_mode = 'music' # speech or music
+    lws_mode = 'speech' # speech or music
     rescaling = False
     rescaling_max = 0.999
     allow_clipping_in_normalization = True
@@ -26,16 +27,16 @@ class hparams:
     #
     #----------------
     # model parameters
-    res_dims = [16, 16, 32, 32, 64, 64, 128, 128]
+    res_dims = [16, 32, 64]
     # convert target spectrogram to mask at this activity threshold
-    mask_threshold = 0.3
+    mask_threshold = 0.5
     # convert output to binary mask at inference time
     mask_at_eval = True
     #----------------
     #
     #----------------
     # training parameters
-    batch_size = 32
+    batch_size = 64
     nepochs = 100
     save_every_epoch = 2
     eval_every_epoch = 2
@@ -46,13 +47,13 @@ class hparams:
     seq_len = seq_len_factor * hop_size
     grad_norm = 10
     #learning rate parameters
-    initial_learning_rate=5e-4
+    initial_learning_rate=1e-4
     lr_schedule_type = 'step' # or 'noam'
     # for noam learning rate schedule
     noam_warm_up_steps = 2000 * (batch_size // 16)
     # for step learning rate schedule
     step_gamma = 0.1
-    lr_step_interval = 5000
+    lr_step_interval = 30000
 
     adam_beta1=0.9
     adam_beta2=0.999

@@ -26,7 +26,7 @@ import torch.nn.functional as F
 from torch import optim
 from torch.utils.data import DataLoader
 
-from audio import load_wav, melspectrogram, show_spec
+from audio import *
 from model import build_model
 from loss_function import nll_loss
 from dataset import basic_collate, SpectrogramDataset
@@ -104,11 +104,12 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
     random.shuffle(files)
     print("Evaluating model...")
     for f in tqdm(files[:hp.num_evals]):
-        gen_spec, mask = model.generate(device, os.path.join(mix_path,f))
+        wav = load_wav(os.path.join(mix_path, f))
+        gen_spec, mask = model.generate_eval(device, wav)
         mix_wav = load_wav(os.path.join(mix_path,f))
-        mix_spec = melspectrogram(mix_wav)
+        mix_spec = spectrogram(mix_wav)[0]
         vox_wav = load_wav(os.path.join(vox_path,f))
-        vox_spec = melspectrogram(vox_wav)
+        vox_spec = spectrogram(vox_wav)[0]
         file_id = f.split(".")[0]
         fig_path = os.path.join(checkpoint_dir, 'eval', f'epoch_{global_epoch:06d}_vox_spec_{file_id}.png')
         plt.figure()
@@ -131,7 +132,7 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
         plt.tight_layout()
         plt.savefig(fig_path)
         plt.clf()
-    
+
 
 def validation_step(device, model, testloader, criterion):
     """check loss on validation set

@@ -48,19 +48,19 @@ class ResSkipBlock(nn.Module):
     
 
 class Model(nn.Module):
-    def __init__(self, input_dims, output_dims, dilations):
+    def __init__(self, input_dims, output_dims, res_dims):
         super().__init__()
-        self.conv_in = nn.Conv2d(1, dilations[0], kernel_size=3, padding=1, bias=False)
+        self.conv_in = nn.Conv2d(1, res_dims[0], kernel_size=3, padding=1, bias=False)
         self.resnet_layers = nn.ModuleList()
-        for i, size in enumerate(dilations[1:]):
-            if size == dilations[i]:
+        for i, size in enumerate(res_dims[1:]):
+            if size == res_dims[i]:
                 self.resnet_layers.append(ResBlock(size))
             else:
-                self.resnet_layers.append(ResSkipBlock(dilations[i], size))
+                self.resnet_layers.append(ResSkipBlock(res_dims[i], size))
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.dropout1 = nn.Dropout(p=0.25)
         self.dropout2 = nn.Dropout(p=0.5)
-        self.fcdims = dilations[-1]*np.product(input_dims)//4
+        self.fcdims = res_dims[-1]*np.prod([dim//2 for dim in input_dims])
         self.fc1 = nn.Linear(self.fcdims, 128)
         self.bn1 = nn.BatchNorm1d(128)
         self.fc2 = nn.Linear(128, output_dims)
@@ -82,7 +82,7 @@ class Model(nn.Module):
         x = self.sigmoid(x)
         return x
 
-    def generate(self, device, path):
+    def generate_eval(self, device, wav):
         """Given a waveform, generate the vocal-only spectrogram slices.
         Another network will need to convert the spectrogram slices back
         into waveforms that can then be concatenated"""
@@ -90,29 +90,46 @@ class Model(nn.Module):
         self.eval()
         window = hp.hop_size*hp.stft_frames - 1
         stride = hp.hop_size
-        wav = load_wav(path)
         count = len(wav)
         i = 0
         output = []
         mask = []
         while (i+window <= count):
             sample = wav[i:i+window]
-            x = melspectrogram(sample)
+            x = spectrogram(sample)[0]
             _x = x[np.newaxis,np.newaxis,:,:]
-            _x = torch.FloatTensor(_x)
-            _x = _x.to(device)
+            _x = torch.FloatTensor(_x).to(device)
             _y = self.forward(_x)
             y = _y.to(torch.device('cpu')).detach().numpy()
             if hp.mask_at_eval:
                 y = y > 0.5
-            width = x.shape[1]
-            z = x[:,width//2]*y
+            z = x[:,hp.stft_frames//2]*y
             output.append(z)
             mask.append(y)
             i += stride
-        return np.stack(output).astype(np.float32).T[:,0,:], np.stack(mask).astype(np.float32).T[:,0,:]
-        
+        return (np.vstack(output).astype(np.float32).T, 
+                    np.vstack(mask).astype(np.float32).T)
+
+    def generate(self, device, wav):
+        self.eval()
+        window = hp.hop_size*hp.stft_frames - 1
+        stride = hp.hop_size
+        count = len(wav)
+        output = []
+        end = count - (count%stride) - window
+        for i in tqdm(range(0, end//stride)):
+            x, stftx = spectrogram(wav[i*stride:i*stride+window])
+            _x = torch.FloatTensor(x[np.newaxis,np.newaxis,:,:]).to(device)
+            _y = self.forward(_x)
+            y = _y.to(torch.device('cpu')).detach().numpy()
+            if hp.mask_at_eval:
+                y = y > 0.5
+            z = stftx[:,hp.stft_frames//2]*y
+            output.append(z)
+        S = np.vstack(output).T
+        return inv_spectrogram(S)
 
 def build_model():
-    model = Model((hp.num_mels, 28), hp.num_mels, hp.res_dims)
+    fft_bins = hp.fft_size//2+1
+    model = Model((fft_bins, hp.stft_frames), fft_bins, hp.res_dims)
     return model

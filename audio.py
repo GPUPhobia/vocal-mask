@@ -42,8 +42,8 @@ def get_mel(path):
     wav = load_wav(path)
     return melspectrogram(wav)
 
-def show_spec(spec):
-    librosa.display.specshow(spec, y_axis='mel', x_axis='time')
+def show_spec(spec, y_axis='mel'):
+    librosa.display.specshow(spec, y_axis=y_axis, x_axis='time')
 
 def preemphasis(x):
     from nnmnkwii.preprocessing import preemphasis
@@ -54,28 +54,63 @@ def inv_preemphasis(x):
     from nnmnkwii.preprocessing import inv_preemphasis
     return inv_preemphasis(x, hparams.preemphasis)
 
-
 def spectrogram(y):
-    D = _lws_processor().stft(preemphasis(y)).T
-    S = _amp_to_db(np.abs(D)) - hparams.ref_level_db
-    return _normalize(S)
+    global _mel_freqs
+    if hparams.use_preemphasis:
+        y = preemphasis(y)
+    S = librosa.stft(y, n_fft=hparams.fft_size, hop_length=hparams.hop_size)
+    if _mel_freqs is None:
+        _mel_freqs = librosa.mel_frequencies(S.shape[0], fmin=hparams.fmin)
+    _S = librosa.perceptual_weighting(np.abs(S)**2, _mel_freqs, ref=hparams.ref_level_db)
+    return _normalize(_S - hparams.ref_level_db), S
 
+def inv_spectrogram(S):
+    y = librosa.istft(S, hop_length=hparams.hop_size)
+    #y = griffinlim(S, n_iter=n_iter, hop_length=hparams.hop_size)
+    if hparams.use_preemphasis:
+        return inv_preemphasis(y)
+    return y
+    
 
-def inv_spectrogram(spectrogram):
-    '''Converts spectrogram to waveform using librosa'''
-    S = _db_to_amp(_denormalize(spectrogram) + hparams.ref_level_db)  # Convert back to linear
-    processor = _lws_processor()
-    D = processor.run_lws(S.astype(np.float64).T ** hparams.power)
-    y = processor.istft(D).astype(np.float32)
-    return inv_preemphasis(y)
-
+#def melspectrogram(y):
+#    D = _lws_processor().stft(preemphasis(y)).T
+#    S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
+#    if not hparams.allow_clipping_in_normalization:
+#        assert S.max() <= 0 and S.min() - hparams.min_level_db >= 0
+#    return _normalize(S)
 
 def melspectrogram(y):
-    D = _lws_processor().stft(preemphasis(y)).T
-    S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
-    if not hparams.allow_clipping_in_normalization:
-        assert S.max() <= 0 and S.min() - hparams.min_level_db >= 0
-    return _normalize(S)
+    if hparams.use_preemphasis:
+        y = preemphasis(y)
+    S = librosa.feature.melspectrogram(
+            y, sr=hparams.sample_rate, n_fft=hparams.fft_size, 
+            hop_length=hparams.hop_size, power=2.0, n_mels=hparams.num_mels)
+    return _normalize(librosa.power_to_db(S, ref=hparams.ref_level_db) - hparams.ref_level_db)
+
+def inv_melspectrogram(spectrogram, n_iter=32):
+    '''Converts melspectrogram to waveform using librosa'''
+
+    S = _denormalize(spectrogram) + hparams.ref_level_db
+    S = _mel_to_linear(librosa.db_to_power(S, ref=hparams.ref_level_db), power=2.0)
+    y = griffinlim(S, n_iter=n_iter, hop_length=hparams.hop_size, 
+            win_length=None, window='hann', center=True, dtype=np.float32,
+            length=None, pad_mode='reflect')
+    if hparams.use_preemphasis:
+        return inv_preemphasis(y)
+    return y
+
+def griffinlim(S, n_iter=32, hop_length=None, win_length=None, window='hann',
+                center=True, dtype=np.float32, length=None, pad_mode='reflect'):
+    n_fft = 2*(S.shape[0] - 1)
+    angles = np.exp(2j * np.pi * np.random.rand(*S.shape))
+    for _ in range(n_iter):
+        inverse = librosa.istft(S*angles, hop_length=hop_length, win_length=win_length,
+            window=window, center=center, dtype=dtype, length=length)
+        rebuilt = librosa.stft(inverse, n_fft=n_fft, hop_length=hop_length,
+                    win_length=win_length, window=window, center=center, pad_mode=pad_mode)
+        angles[:] = np.exp(1j * np.angle(rebuilt))
+    return librosa.istft(S*angles, hop_length=hop_length, win_length=win_length,
+            window=window, center=center, dtype=dtype, length=length)
 
 
 def _lws_processor():
@@ -86,13 +121,19 @@ def _lws_processor():
 
 
 _mel_basis = None
-
+_mel_freqs = None
 
 def _linear_to_mel(spectrogram):
     global _mel_basis
     if _mel_basis is None:
         _mel_basis = _build_mel_basis()
     return np.dot(_mel_basis, spectrogram)
+
+def _mel_to_linear(spectrogram, power):
+    global _mel_basis
+    if _mel_basis is None:
+        _mel_basis = _build_mel_basis()
+    return np.clip(np.linalg.lstsq(_mel_basis, spectrogram, rcond=None)[0], 0, None)**(1./power)
 
 
 def _build_mel_basis():
