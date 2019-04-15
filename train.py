@@ -49,8 +49,7 @@ def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch, train
         "global_step": step,
         "global_epoch": epoch,
         "global_test_step": global_test_step,
-        "trainset": trainloader.dataset.metadata,
-        "testset": testloader.dataset.metadata
+        "dataset_ids": testloader.dataset.metadata + trainloader.dataset.metadata
     }, checkpoint_path)
     print("Saved checkpoint:", checkpoint_path)
 
@@ -81,7 +80,7 @@ def load_checkpoint(path, model, optimizer, reset_optimizer):
     global_epoch = checkpoint["global_epoch"]
     global_test_step = checkpoint.get("global_test_step", 0)
 
-    return model, checkpoint["trainset"], checkpoint["testset"]
+    return model, checkpoint['dataset_ids']
 
 
 def test_save_checkpoint():
@@ -224,6 +223,7 @@ if __name__=="__main__":
     device = torch.device("cuda" if use_cuda else "cpu")
     print("using device:{}".format(device))
 
+
     # build model, create optimizer
     model = build_model().to(device)
     optimizer = optim.Adam(model.parameters(),
@@ -245,21 +245,22 @@ if __name__=="__main__":
         with open(os.path.join(data_root, 'dataset_ids.pkl'), 'rb') as f:
             dataset_ids = pickle.load(f)
         random.shuffle(dataset_ids)
-        split = int(len(dataset_ids)*hp.train_test_split)
-        test_ids = dataset_ids[:split]
-        train_ids = dataset_ids[split:]
         
     else:
-        model, train_ids, test_ids = load_checkpoint(checkpoint_path, model, optimizer, False)
+        model, dataset_ids = load_checkpoint(checkpoint_path, model, optimizer, False)
         print("loading model from checkpoint:{}".format(checkpoint_path))
         # set global_test_step to True so we don't evaluate right when we load in the model
         global_test_step = True
 
     # create dataloaders
+    split = int(len(dataset_ids)*hp.train_test_split)
+    test_ids = dataset_ids[:split]
+    train_ids = dataset_ids[split:]
     trainset = SpectrogramDataset(data_root, train_ids)
     testset = SpectrogramDataset(data_root, test_ids)
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
     testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.test_batch_size)
+
 
     # main train loop
     try:

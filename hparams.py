@@ -7,13 +7,13 @@ class hparams:
     fmax = 11025
     fft_size = 1024
     stft_frames = 25
-    stft_stride = 4
+    stft_stride = 2
     hop_size = 256
     win_length = 1024
     sample_rate = 22050
     use_preemphasis = True # apply preemphasis transformation to waveform
     preemphasis = 0.97
-    power = 2
+    power = 3
     min_level_db = -100
     ref_level_db = 20
     lws_mode = 'speech' # speech or music
@@ -39,13 +39,13 @@ class hparams:
     #
     #----------------
     # training parameters
-    batch_size = 64
+    batch_size = 96
     test_batch_size = 8
     nepochs = 100
     save_every_epoch = 2
     eval_every_epoch = 2
     num_evals = 4  # number of evals to generate
-    train_test_split = 0.1 # reserve 10% of data for validation
+    train_test_split = 0.05 # reserve 5% of data for validation
     # seq_len_factor can be adjusted to increase training sequence length (will increase GPU usage)
     seq_len_factor = 5
     seq_len = seq_len_factor * hop_size
