@@ -27,7 +27,7 @@ class hparams:
     #
     #----------------
     # model parameters
-    res_dims = [16, 32, 64]
+    res_dims = [16, 16, 32, 32, 64, 64]
     # convert target spectrogram to mask at this activity threshold
     mask_threshold = 0.5
     # convert output to binary mask at inference time

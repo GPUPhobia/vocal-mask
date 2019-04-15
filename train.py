@@ -131,7 +131,7 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
 
         plt.tight_layout()
         plt.savefig(fig_path)
-        plt.clf()
+        plt.close('all')
 
 
 def validation_step(device, model, testloader, criterion):

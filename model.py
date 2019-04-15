@@ -20,10 +20,10 @@ class ResBlock(nn.Module):
     def forward(self, x):
         residual = x
         x = self.bn1(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x)
         x = self.conv1(x)
         x = self.bn2(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x)
         x = self.conv2(x)
         return x + residual
 
@@ -39,10 +39,10 @@ class ResSkipBlock(nn.Module):
     def forward(self, x):
         residual = self.conv0(x)
         x = self.bn1(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x)
         x = self.conv1(x)
         x = self.bn2(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x)
         x = self.conv2(x)
         return x + residual
     
@@ -57,8 +57,8 @@ class Model(nn.Module):
                 self.resnet_layers.append(ResBlock(size))
             else:
                 self.resnet_layers.append(ResSkipBlock(res_dims[i], size))
-        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
-        self.dropout1 = nn.Dropout(p=0.25)
+        self.maxpool1 = nn.MaxPool2d(kernel_size=3, stride=2)
+        self.dropout1 = nn.Dropout(p=0.5)
         self.dropout2 = nn.Dropout(p=0.5)
         self.fcdims = res_dims[-1]*np.prod([dim//2 for dim in input_dims])
         self.fc1 = nn.Linear(self.fcdims, 128)

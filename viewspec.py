@@ -40,8 +40,8 @@ vox_wav = get_wav(os.path.join(vox_dir, fname))
 vox_mel, vox_spec = get_spec(vox_wav)
 vox_mask = vox_mel > hp.mask_threshold
 gen_vox = mix_spec*vox_mask
-wav = inv_spec(gen_vox)
-save_wav(wav, 'test.wav')
+#wav = inv_spec(gen_vox)
+#save_wav(wav, 'test.wav')
 
 # Show spectrograms
 plt.figure()
