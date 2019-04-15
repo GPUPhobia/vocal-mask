@@ -7,7 +7,7 @@ class hparams:
     fmax = 11025
     fft_size = 1024
     stft_frames = 25
-    stft_stride = 12
+    stft_stride = 4
     hop_size = 256
     win_length = 1024
     sample_rate = 22050
@@ -27,16 +27,20 @@ class hparams:
     #
     #----------------
     # model parameters
-    res_dims = [16, 16, 32, 32, 64, 64]
+    model_type='convnet'  # convnet or resnet
+    res_dims = [32, 32, 64, 64, 128, 128, 256, 256]
     # convert target spectrogram to mask at this activity threshold
     mask_threshold = 0.5
     # convert output to binary mask at inference time
     mask_at_eval = True
+    # if not mask_at_eval is False, zero out values under the noise_gate
+    noise_gate = 0.3
     #----------------
     #
     #----------------
     # training parameters
     batch_size = 64
+    test_batch_size = 8
     nepochs = 100
     save_every_epoch = 2
     eval_every_epoch = 2

@@ -14,33 +14,15 @@ import lws
 
 def load_wav(path):
     wav = librosa.load(path, sr=hparams.sample_rate)[0]
-    if hparams.trim:
-        wav = librosa.effects.trim(wav, top_db=hparams.trim_thresh)[0]
     return wav
-
-def slice_wav(wav, window, stride):
-    wavs = []
-    N = len(wav)
-    i = 0
-    while (i+window < N):
-        wavs.append(np.array(wav[i:i+window]))
-        i += stride
-    return wavs
 
 def get_wav_slices(wav, window, stride):
     N = len(wav)
     return [(i,i+window) for i in range(0, N-window, stride)]
 
-def sum_wavs(*wavs):
-    return np.sum(wavs, axis=0)
-
 def save_wav(wav, path):
     wav = wav * 32767 / max(0.01, np.max(np.abs(wav)))
     wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
-
-def get_mel(path):
-    wav = load_wav(path)
-    return melspectrogram(wav)
 
 def show_spec(spec, y_axis='mel'):
     librosa.display.specshow(spec, y_axis=y_axis, x_axis='time')
@@ -71,13 +53,6 @@ def inv_spectrogram(S):
         return inv_preemphasis(y)
     return y
     
-
-#def melspectrogram(y):
-#    D = _lws_processor().stft(preemphasis(y)).T
-#    S = _amp_to_db(_linear_to_mel(np.abs(D))) - hparams.ref_level_db
-#    if not hparams.allow_clipping_in_normalization:
-#        assert S.max() <= 0 and S.min() - hparams.min_level_db >= 0
-#    return _normalize(S)
 
 def melspectrogram(y):
     if hparams.use_preemphasis:

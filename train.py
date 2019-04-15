@@ -38,7 +38,7 @@ global_epoch = 0
 global_test_step = 0
 use_cuda = torch.cuda.is_available()
 
-def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch):
+def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch, trainloader, testloader):
     checkpoint_path = join(
         checkpoint_dir, "checkpoint_step{:09d}.pth".format(step))
     optimizer_state = optimizer.state_dict()
@@ -49,6 +49,8 @@ def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch):
         "global_step": step,
         "global_epoch": epoch,
         "global_test_step": global_test_step,
+        "trainset": trainloader.dataset.metadata,
+        "testset": testloader.dataset.metadata
     }, checkpoint_path)
     print("Saved checkpoint:", checkpoint_path)
 
@@ -79,7 +81,7 @@ def load_checkpoint(path, model, optimizer, reset_optimizer):
     global_epoch = checkpoint["global_epoch"]
     global_test_step = checkpoint.get("global_test_step", 0)
 
-    return model
+    return model, checkpoint["trainset"], checkpoint["testset"]
 
 
 def test_save_checkpoint():
@@ -173,6 +175,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
     while global_epoch < hp.nepochs:
         running_loss = 0
         model.train()
+        print(f"[Epoch {global_epoch}]")
         for i, (x, y) in enumerate(tqdm(trainloader)):
             x, y = x.to(device), y.to(device)
             y_pred = model(x)
@@ -201,12 +204,9 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
         # save checkpoint
         if global_epoch != 0 and global_epoch % hp.save_every_epoch == 0:
-            save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
+            save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch, trainloader, testloader)
     
-        print("epoch:{}, lr:{}, running loss:{}, avg train loss:{}, avg valid loss:{}".format(
-            global_epoch, current_lr, running_loss, 
-            avg_loss, avg_valid_loss)
-        )
+        print(f"lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
         global_epoch += 1
 
 
@@ -221,16 +221,6 @@ if __name__=="__main__":
     # make dirs, load dataloader and set up device
     os.makedirs(checkpoint_dir, exist_ok=True)
     os.makedirs(os.path.join(checkpoint_dir,'eval'), exist_ok=True)
-    with open(os.path.join(data_root, 'dataset_ids.pkl'), 'rb') as f:
-        dataset_ids = pickle.load(f)
-    random.shuffle(dataset_ids)
-    split = int(len(dataset_ids)*hp.train_test_split)
-    test_ids = dataset_ids[:split]
-    train_ids = dataset_ids[split:]
-    trainset = SpectrogramDataset(data_root, train_ids)
-    testset = SpectrogramDataset(data_root, test_ids)
-    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
-    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=4)
     device = torch.device("cuda" if use_cuda else "cpu")
     print("using device:{}".format(device))
 
@@ -252,11 +242,24 @@ if __name__=="__main__":
     # load checkpoint
     if checkpoint_path is None:
         print("no checkpoint specified as --checkpoint argument, creating new model...")
+        with open(os.path.join(data_root, 'dataset_ids.pkl'), 'rb') as f:
+            dataset_ids = pickle.load(f)
+        random.shuffle(dataset_ids)
+        split = int(len(dataset_ids)*hp.train_test_split)
+        test_ids = dataset_ids[:split]
+        train_ids = dataset_ids[split:]
+        
     else:
-        model = load_checkpoint(checkpoint_path, model, optimizer, False)
+        model, train_ids, test_ids = load_checkpoint(checkpoint_path, model, optimizer, False)
         print("loading model from checkpoint:{}".format(checkpoint_path))
         # set global_test_step to True so we don't evaluate right when we load in the model
         global_test_step = True
+
+    # create dataloaders
+    trainset = SpectrogramDataset(data_root, train_ids)
+    testset = SpectrogramDataset(data_root, test_ids)
+    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
+    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.test_batch_size)
 
     # main train loop
     try:
@@ -266,6 +269,6 @@ if __name__=="__main__":
         pass
     finally:
         print("saving model....")
-        save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
+        save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch, trainloader, testloader)
     
 
