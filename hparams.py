@@ -27,8 +27,11 @@ class hparams:
     #
     #----------------
     # model parameters
-    model_type='convnet'  # convnet or resnet
-    res_dims = [32, 32, 64, 64, 128, 128, 256, 256]
+    model_type='resnet'  # convnet or resnet
+    res_dims = [
+        (32, 32, None), (32, 32, (2,2)),
+        (32, 64, None), (64, 64, None), (64, 16, (2,2)) 
+    ]
     # convert target spectrogram to mask at this activity threshold
     mask_threshold = 0.5
     # convert output to binary mask at inference time

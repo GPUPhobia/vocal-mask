@@ -31,10 +31,10 @@ class ResSkipBlock(nn.Module):
     def __init__(self, in_dims, out_dims):
         super().__init__()
         self.conv0 = nn.Conv2d(in_dims, out_dims, kernel_size=1, stride=1, bias=False)
-        self.conv1 = nn.Conv2d(in_dims, in_dims, kernel_size=3, padding=1, stride=1, bias=False)
-        self.conv2 = nn.Conv2d(in_dims, out_dims, kernel_size=3, padding=1, stride=1, bias=False)
+        self.conv1 = nn.Conv2d(in_dims, out_dims, kernel_size=3, padding=1, stride=1, bias=False)
+        self.conv2 = nn.Conv2d(out_dims, out_dims, kernel_size=3, padding=1, stride=1, bias=False)
         self.bn1 = nn.BatchNorm2d(in_dims)
-        self.bn2 = nn.BatchNorm2d(in_dims)
+        self.bn2 = nn.BatchNorm2d(out_dims)
 
     def forward(self, x):
         residual = self.conv0(x)
@@ -46,39 +46,55 @@ class ResSkipBlock(nn.Module):
         x = self.conv2(x)
         return x + residual
 
+class Conv3x3(nn.Module):
+    def __init__(self, in_planes, out_planes, activation):
+        super().__init__()
+        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=3, padding=1)
+        self.bn = nn.BatchNorm2d(out_planes)
+        self.activation = activation
+
+    def forward(self, x):
+        return self.activation(self.bn(self.conv(x)))
+
+class FC(nn.Module):
+    def __init__(self, indims, outdims, activation):
+        super().__init__()
+        self.fc = nn.Linear(indims, outdims)
+        self.bn = nn.BatchNorm1d(outdims)
+        self.activation = activation
+
+    def forward(self, x):
+        return self.activation(self.bn(self.fc(x)))
+
 class ConvNet(nn.Module):
     def __init__(self, input_dims, output_dims):
         super().__init__()
-        self.conv1 = nn.Conv2d(1, 32, kernel_size=3, padding=1)
-        self.bn1 = nn.BatchNorm2d(32)
-        self.conv2 = nn.Conv2d(32, 16, kernel_size=3, padding=1)
-        self.bn2 = nn.BatchNorm2d(16)
+        self.activation = F.relu
+        #self.activation = F.leaky_relu
+        self.conv1 = Conv3x3(1, 32, self.activation)
+        self.conv2 = Conv3x3(32, 16, self.activation)
         self.maxpool1 = nn.MaxPool2d(kernel_size=2)
         self.dropout1 = nn.Dropout(p=0.25)
-        self.conv3 = nn.Conv2d(16, 64, kernel_size=3, padding=1)
-        self.bn3 = nn.BatchNorm2d(64)
-        self.conv4 = nn.Conv2d(64, 16, kernel_size=3, padding=1)
-        self.bn4 = nn.BatchNorm2d(16)
+        self.conv3 = Conv3x3(16, 64, self.activation)
+        self.conv4 = Conv3x3(64, 16, self.activation)
         self.maxpool2 = nn.MaxPool2d(kernel_size=2)
         self.dropout2 = nn.Dropout(p=0.5)
         fcdims = 16*np.product([dim//4 for dim in input_dims])
-        self.fc1 = nn.Linear(fcdims, 128)
-        self.bn5 = nn.BatchNorm1d(128)
+        self.fc1 = FC(fcdims, 128, self.activation)
         self.dropout3 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(128, output_dims)
-        self.activation = F.relu
     
     def forward(self, x):
-        x = self.bn1(self.activation(self.conv1(x)))
-        x = self.bn2(self.activation(self.conv2(x)))
+        x = self.conv1(x)
+        x = self.conv2(x)
         x = self.maxpool1(x)
         x = self.dropout1(x)
-        x = self.bn3(self.activation(self.conv3(x)))
-        x = self.bn4(self.activation(self.conv4(x)))
+        x = self.conv3(x)
+        x = self.conv4(x)
         x = self.maxpool2(x)
         x = self.dropout2(x)
         x = x.view(x.size(0), -1)
-        x = self.bn5(self.activation(self.fc1(x)))
+        x = self.fc1(x)
         x = self.dropout3(x)
         x = self.fc2(x)
         return x
@@ -86,37 +102,36 @@ class ConvNet(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, input_dims, output_dims, res_dims):
         super().__init__()
-        self.conv_in = nn.Conv2d(1, res_dims[0], kernel_size=3, padding=1, stride=1)
+        in_filters = res_dims[0][0]
+        out_filters = res_dims[-1][1]
+        self.conv_in = nn.Conv2d(1, in_filters, kernel_size=3, padding=1, bias=False)
         self.resnet_layers = nn.ModuleList()
-        for i, size in enumerate(res_dims[1:]):
-            if size == res_dims[i]:
-                self.resnet_layers.append(ResBlock(size))
+        downsample_factor = 1
+        for res_dim in res_dims:
+            in_planes, out_planes, downsample = res_dim
+            if in_planes == out_planes:
+                self.resnet_layers.append(ResBlock(in_planes))
             else:
-                self.resnet_layers.append(ResSkipBlock(res_dims[i], size))
-        self.bn1 = nn.BatchNorm2d(res_dims[-1])
-        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+                self.resnet_layers.append(ResSkipBlock(in_planes, out_planes))
+            if downsample is not None:
+                self.resnet_layers.append(nn.MaxPool2d(kernel_size=downsample[0], stride=downsample[1]))
+                downsample_factor *= downsample[1]
+        self.bn1 = nn.BatchNorm2d(out_filters)
         self.dropout1 = nn.Dropout(p=0.5)
-        self.fcdims = res_dims[-1]*np.prod([dim//2 for dim in input_dims])
-        self.bn2 = nn.BatchNorm2d(res_dims[-1])
-        self.fc1 = nn.Linear(self.fcdims, 128)
-        self.bn3 = nn.BatchNorm1d(128)
+        self.fcdims = out_filters*np.prod([dim//downsample_factor for dim in input_dims])
+        self.fc1 = FC(self.fcdims, 128, F.relu)
         self.dropout2 = nn.Dropout(p=0.5)
         self.fc2 = nn.Linear(128, output_dims)
 
     def forward(self, x):
-        x = F.relu(self.conv_in(x))
-        x = self.maxpool(x)
+        x = self.conv_in(x)
         for layer in self.resnet_layers:
             x = layer(x)
-        x = self.bn1(x)
-        x = F.relu(x)
-        x = self.maxpool2(x)
-        x = self.bn2(x)
+        x = F.relu(self.bn1(x))
+        #x = self.maxpool1(x)
         x = self.dropout1(x)
         x = x.view(x.size(0), -1)
         x = self.fc1(x)
-        x = F.relu(x)
-        x = self.bn3(x)
         x = self.dropout2(x)
         x = self.fc2(x)
         return x
