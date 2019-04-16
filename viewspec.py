@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 eval_dir = sys.argv[1]
 idx = int(sys.argv[2])
 
-mix_dir = os.path.join(eval_dir, 'mix')
-vox_dir = os.path.join(eval_dir, 'vox')
+mix_dir = os.path.join(eval_dir, 'mixture')
+vox_dir = os.path.join(eval_dir, 'vocal')
 
 def get_wav(path):
     wav = load_wav(path)
@@ -33,7 +33,7 @@ def get_spec(wav):
 def inv_spec(spec):
     return inv_spectrogram(spec)
 
-fname = f"eval{idx:06d}.wav"
+fname = f"{idx:06d}.wav"
 mix_wav = get_wav(os.path.join(mix_dir, fname))
 mix_mel, mix_spec = get_spec(mix_wav)
 vox_wav = get_wav(os.path.join(vox_dir, fname))

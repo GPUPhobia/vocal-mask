@@ -28,15 +28,15 @@ else:
     dataset = DSD(root_dir=root_dir)
     tracks = dataset.load_tracks()
     random.shuffle(tracks)
-    eval_tracks = tracks[:10]
-    tracks = tracks[10:]
+    eval_tracks = tracks[:8]
+    tracks = tracks[8:]
 
 os.makedirs(output_dir, exist_ok=True)
 mixture_path = os.path.join(output_dir, "mixture")
 vocal_path = os.path.join(output_dir, "vocal")
 eval_path = os.path.join(output_dir, "eval")
-eval_mix_path = os.path.join(eval_path, "mix")
-eval_vox_path = os.path.join(eval_path, "vox")
+eval_mix_path = os.path.join(eval_path, "mixture")
+eval_vox_path = os.path.join(eval_path, "vocal")
 os.makedirs(mixture_path, exist_ok=True)
 os.makedirs(vocal_path, exist_ok=True)
 os.makedirs(eval_mix_path, exist_ok=True)
@@ -86,7 +86,7 @@ for track in tqdm(eval_tracks):
         # skip slices with no audio content
         if np.sum(mixture[j:k]) == 0:
             continue
-        fname = f"eval{i:06d}.wav"
+        fname = f"{i:06d}.wav"
         save_wav(mixture[j:k], os.path.join(eval_mix_path, fname))
         save_wav(vocal[j:k], os.path.join(eval_vox_path, fname))
         i += 1

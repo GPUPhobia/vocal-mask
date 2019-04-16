@@ -22,7 +22,8 @@ class DSD(object):
         tracks = []
         mixfs = os.listdir(self.mixtures)
         srcfs = os.listdir(self.sources)
-        for i in range(1,101):
+        total = len(mixfs) + 1
+        for i in range(1,total):
             mixdir = next(f for f in mixfs if int(f[:3]) == i)
             srcdir = next(f for f in srcfs if int(f[:3]) == i)
             targets = {}
