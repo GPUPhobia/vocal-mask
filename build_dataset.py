@@ -110,7 +110,7 @@ for track in tqdm(eval_tracks):
     slices = get_wav_slices(mixture, hp.eval_length, hp.eval_length)
     for j,k in slices:
         # skip slices with no audio content
-        if np.sum(mixture[j:k]) == 0:
+        if np.sum(vocal[j:k]) == 0:
             continue
         fname = f"{i:06d}.wav"
         save_wav(mixture[j:k], os.path.join(eval_mix_path, fname))

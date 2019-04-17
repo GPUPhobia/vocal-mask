@@ -104,11 +104,10 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
     random.shuffle(files)
     print("Evaluating model...")
     for f in tqdm(files[:hp.num_evals]):
-        wav = load_wav(os.path.join(mix_path, f))
-        gen_spec, mask = model.generate_eval(device, wav)
-        mix_wav = load_wav(os.path.join(mix_path,f))
-        mix_spec = spectrogram(mix_wav)[0]
+        mix_wav = load_wav(os.path.join(mix_path, f))
         vox_wav = load_wav(os.path.join(vox_path,f))
+        gen_spec, mask = model.generate_eval(device, mix_wav)
+        mix_spec = spectrogram(mix_wav)[0]
         vox_spec = spectrogram(vox_wav)[0]
         file_id = f.split(".")[0]
         fig_path = os.path.join(checkpoint_dir, 'eval', f'epoch_{global_epoch:06d}_vox_spec_{file_id}.png')
