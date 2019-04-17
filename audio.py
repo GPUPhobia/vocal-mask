@@ -36,14 +36,14 @@ def inv_preemphasis(x):
     from nnmnkwii.preprocessing import inv_preemphasis
     return inv_preemphasis(x, hparams.preemphasis)
 
-def spectrogram(y):
+def spectrogram(y, power):
     global _mel_freqs
     if hparams.use_preemphasis:
         y = preemphasis(y)
     S = librosa.stft(y, n_fft=hparams.fft_size, hop_length=hparams.hop_size)
     if _mel_freqs is None:
         _mel_freqs = librosa.mel_frequencies(S.shape[0], fmin=hparams.fmin)
-    _S = librosa.perceptual_weighting(np.abs(S)**hparams.power, _mel_freqs, ref=hparams.ref_level_db)
+    _S = librosa.perceptual_weighting(np.abs(S)**power, _mel_freqs, ref=hparams.ref_level_db)
     return _normalize(_S - hparams.ref_level_db), S
 
 def inv_spectrogram(S):

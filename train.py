@@ -107,8 +107,8 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
         mix_wav = load_wav(os.path.join(mix_path, f))
         vox_wav = load_wav(os.path.join(vox_path,f))
         gen_spec, mask = model.generate_eval(device, mix_wav)
-        mix_spec = spectrogram(mix_wav)[0]
-        vox_spec = spectrogram(vox_wav)[0]
+        mix_spec = spectrogram(mix_wav, power=hp.mix_power_factor)[0]
+        vox_spec = spectrogram(vox_wav, power=hp.vox_power_factor)[0]
         file_id = f.split(".")[0]
         fig_path = os.path.join(checkpoint_dir, 'eval', f'epoch_{global_epoch:06d}_vox_spec_{file_id}.png')
         plt.figure()

@@ -13,15 +13,14 @@ class hparams:
     sample_rate = 22050
     use_preemphasis = True # apply preemphasis transformation to waveform
     preemphasis = 0.97
-    power = 3
+    mix_power_factor = 2
+    vox_power_factor = 3
     min_level_db = -100
     ref_level_db = 20
     lws_mode = 'speech' # speech or music
     rescaling = False
     rescaling_max = 0.999
     allow_clipping_in_normalization = True
-    trim = False # whether to cut silence from the ends of the waveform
-    trim_thresh = 80 # how much below max db to trim waveform
     eval_length = sample_rate*2  # slice size for evaluation samples
     #----------------
     #
@@ -52,9 +51,6 @@ class hparams:
     eval_every_epoch = 2
     num_evals = 4  # number of evals to generate
     train_test_split = 0.05 # reserve 5% of data for validation
-    # seq_len_factor can be adjusted to increase training sequence length (will increase GPU usage)
-    seq_len_factor = 5
-    seq_len = seq_len_factor * hop_size
     grad_norm = 10
     #learning rate parameters
     initial_learning_rate=1e-4

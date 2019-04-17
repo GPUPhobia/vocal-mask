@@ -83,8 +83,8 @@ i = 0
 print("slicing training samples")
 for idx, track in enumerate(tqdm(tracks)):
     mixture, vocal = load_samples(track)
-    mix_spec = spectrogram(mixture)[0][np.newaxis,:,:]
-    vox_spec = spectrogram(vocal)[0]
+    mix_spec = spectrogram(mixture, power=hp.mix_power_factor)[0][np.newaxis,:,:]
+    vox_spec = spectrogram(vocal, power=hp.vox_power_factor)[0]
     size = mix_spec.shape[2] - hp.stft_frames
     spec_id = f"spec{idx:06d}"
     for j in range(0, size, hp.stft_stride):

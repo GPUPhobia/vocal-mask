@@ -22,25 +22,14 @@ fname = sys.argv[2]
 mix_dir = os.path.join(eval_dir, 'mix')
 vox_dir = os.path.join(eval_dir, 'vox')
 
-def get_wav(path):
-    wav = load_wav(path)
-    return wav
-
-def get_spec(wav):
-    #return melspectrogram(wav)
-    return spectrogram(wav)
-
-def inv_spec(spec):
-    return inv_spectrogram(spec)
-
 #fname = f"{idx:06d}.wav"
-mix_wav = get_wav(os.path.join(mix_dir, fname))
-mix_mel, mix_spec = get_spec(mix_wav)
-vox_wav = get_wav(os.path.join(vox_dir, fname))
-vox_mel, vox_spec = get_spec(vox_wav)
+mix_wav = load_wav(os.path.join(mix_dir, fname))
+mix_mel, mix_spec = get_spec(mix_wav, power=hp.mix_power_factor)
+vox_wav = load_wav(os.path.join(vox_dir, fname))
+vox_mel, vox_spec = get_spec(vox_wav, power=hp.vox_power_factor)
 vox_mask = vox_mel > hp.mask_threshold
 gen_vox = mix_spec*vox_mask
-wav = inv_spec(gen_vox)
+wav = inv_spectrogram(gen_vox)
 save_wav(wav, 'test.wav')
 
 # Show spectrograms

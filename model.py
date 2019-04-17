@@ -166,7 +166,7 @@ class Model(nn.Module):
         mask = []
         while (i+window <= count):
             sample = wav[i:i+window]
-            x = spectrogram(sample)[0]
+            x = spectrogram(sample, power=hp.mix_power_factor)[0]
             _x = x[np.newaxis,np.newaxis,:,:]
             _x = torch.FloatTensor(_x).to(device)
             _y = self.forward(_x)
@@ -188,7 +188,7 @@ class Model(nn.Module):
         output = []
         end = count - (count%stride) - window
         for i in tqdm(range(0, end//stride)):
-            x, stftx = spectrogram(wav[i*stride:i*stride+window])
+            x, stftx = spectrogram(wav[i*stride:i*stride+window], power=hp.mix_power_factor)
             _x = torch.FloatTensor(x[np.newaxis,np.newaxis,:,:]).to(device)
             _y = self.forward(_x)
             y = _y.to(torch.device('cpu')).detach().numpy()
