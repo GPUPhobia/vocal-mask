@@ -37,6 +37,8 @@ class hparams:
     mask_threshold = 0.5
     # convert output to binary mask at inference time
     mask_at_eval = True
+    # threshold for masking at inference time
+    eval_mask_threshold = 0.3
     # if not mask_at_eval is False, zero out values under the noise_gate
     noise_gate = 0.3
     #----------------

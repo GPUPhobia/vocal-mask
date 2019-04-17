@@ -17,7 +17,7 @@ if platform.system() == 'Darwin':
 import matplotlib.pyplot as plt
 
 eval_dir = sys.argv[1]
-idx = int(sys.argv[2])
+fname = sys.argv[2]
 
 mix_dir = os.path.join(eval_dir, 'mix')
 vox_dir = os.path.join(eval_dir, 'vox')
@@ -33,15 +33,15 @@ def get_spec(wav):
 def inv_spec(spec):
     return inv_spectrogram(spec)
 
-fname = f"{idx:06d}.wav"
+#fname = f"{idx:06d}.wav"
 mix_wav = get_wav(os.path.join(mix_dir, fname))
 mix_mel, mix_spec = get_spec(mix_wav)
 vox_wav = get_wav(os.path.join(vox_dir, fname))
 vox_mel, vox_spec = get_spec(vox_wav)
 vox_mask = vox_mel > hp.mask_threshold
 gen_vox = mix_spec*vox_mask
-#wav = inv_spec(gen_vox)
-#save_wav(wav, 'test.wav')
+wav = inv_spec(gen_vox)
+save_wav(wav, 'test.wav')
 
 # Show spectrograms
 plt.figure()

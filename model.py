@@ -193,7 +193,7 @@ class Model(nn.Module):
             _y = self.forward(_x)
             y = _y.to(torch.device('cpu')).detach().numpy()
             if hp.mask_at_eval:
-                y = y > 0.5
+                y = y > hp.eval_mask_threshold
             z = stftx[:,hp.stft_frames//2]*y
             if not hp.mask_at_eval:
                 z = z*(z > hp.noise_gate)
