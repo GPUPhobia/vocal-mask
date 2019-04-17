@@ -38,7 +38,7 @@ global_epoch = 0
 global_test_step = 0
 use_cuda = torch.cuda.is_available()
 
-def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch, trainloader, testloader):
+def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch):
     checkpoint_path = join(
         checkpoint_dir, "checkpoint_step{:09d}.pth".format(step))
     optimizer_state = optimizer.state_dict()
@@ -48,8 +48,7 @@ def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch, train
         "optimizer": optimizer_state,
         "global_step": step,
         "global_epoch": epoch,
-        "global_test_step": global_test_step,
-        "dataset_ids": testloader.dataset.metadata + trainloader.dataset.metadata
+        "global_test_step": global_test_step
     }, checkpoint_path)
     print("Saved checkpoint:", checkpoint_path)
 
@@ -80,7 +79,7 @@ def load_checkpoint(path, model, optimizer, reset_optimizer):
     global_epoch = checkpoint["global_epoch"]
     global_test_step = checkpoint.get("global_test_step", 0)
 
-    return model, checkpoint['dataset_ids']
+    return model
 
 
 def test_save_checkpoint():
@@ -203,7 +202,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
         # save checkpoint
         if global_epoch != 0 and global_epoch % hp.save_every_epoch == 0:
-            save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch, trainloader, testloader)
+            save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
     
         print(f"lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
         global_epoch += 1
@@ -242,17 +241,16 @@ if __name__=="__main__":
     # load checkpoint
     if checkpoint_path is None:
         print("no checkpoint specified as --checkpoint argument, creating new model...")
-        with open(os.path.join(data_root, 'dataset_ids.pkl'), 'rb') as f:
-            dataset_ids = pickle.load(f)
-        random.shuffle(dataset_ids)
         
     else:
-        model, dataset_ids = load_checkpoint(checkpoint_path, model, optimizer, False)
+        model = load_checkpoint(checkpoint_path, model, optimizer, False)
         print("loading model from checkpoint:{}".format(checkpoint_path))
         # set global_test_step to True so we don't evaluate right when we load in the model
         global_test_step = True
 
     # create dataloaders
+    with open(os.path.join(data_root, 'dataset_ids.pkl'), 'rb') as f:
+        dataset_ids = pickle.load(f)
     split = int(len(dataset_ids)*hp.train_test_split)
     test_ids = dataset_ids[:split]
     train_ids = dataset_ids[split:]
@@ -270,6 +268,6 @@ if __name__=="__main__":
         pass
     finally:
         print("saving model....")
-        save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch, trainloader, testloader)
+        save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
     
 

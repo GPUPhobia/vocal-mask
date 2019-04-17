@@ -101,6 +101,7 @@ for idx, track in enumerate(tracks):
         np.save(os.path.join(vocal_path, file_id+".npy"), vox_spec)
         i += 1
 with open(os.path.join(output_dir, 'dataset_ids.pkl'), 'wb') as f:
+    random.shuffle(dataset_ids)
     pickle.dump(dataset_ids, f)
 
 i = 0
