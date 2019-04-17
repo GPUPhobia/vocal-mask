@@ -81,10 +81,11 @@ def load_samples(track):
 dataset_ids = []
 i = 0
 print("slicing training samples")
-for track in tqdm(tracks):
+for idx, track in enumerate(tracks):
+    print(f"[Track {idx}]")
     mixture, vocal = load_samples(track)
     slices = get_wav_slices(mixture, window, stride)
-    for j,k in slices:
+    for j,k in tqdm(slices):
         # skip slices with no audio content
         if np.sum(mixture[j:k]) == 0:
             continue
@@ -99,8 +100,8 @@ for track in tqdm(tracks):
         np.save(os.path.join(mixture_path, file_id+".npy"), mix_spec)
         np.save(os.path.join(vocal_path, file_id+".npy"), vox_spec)
         i += 1
-    with open(os.path.join(output_dir, 'dataset_ids.pkl'), 'wb') as f:
-        pickle.dump(dataset_ids, f)
+with open(os.path.join(output_dir, 'dataset_ids.pkl'), 'wb') as f:
+    pickle.dump(dataset_ids, f)
 
 i = 0
 print("slicing eval samples")
