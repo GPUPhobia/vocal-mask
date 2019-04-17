@@ -1,6 +1,6 @@
 """Training WaveRNN Model.
 
-usage: train.py [options] <data-root> <eval-dir>
+usage: train.py [options] <data-root>
 
 options:
     --checkpoint-dir=<dir>      Directory where to save model checkpoints [default: checkpoints].
@@ -214,7 +214,7 @@ if __name__=="__main__":
     checkpoint_dir = args["--checkpoint-dir"]
     checkpoint_path = args["--checkpoint"]
     data_root = args["<data-root>"]
-    eval_dir = args["<eval-dir>"]
+    eval_dir = os.path.join(data_root, "eval")
 
     # make dirs, load dataloader and set up device
     os.makedirs(checkpoint_dir, exist_ok=True)

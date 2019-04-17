@@ -81,25 +81,24 @@ def load_samples(track):
 dataset_ids = []
 i = 0
 print("slicing training samples")
-for idx, track in enumerate(tracks):
-    print(f"[Track {idx}]")
+for idx, track in enumerate(tqdm(tracks)):
     mixture, vocal = load_samples(track)
-    slices = get_wav_slices(mixture, window, stride)
-    for j,k in tqdm(slices):
+    mix_spec = spectrogram(mixture)[0][np.newaxis,:,:]
+    vox_spec = spectrogram(vocal)[0]
+    size = mix_spec.shape[2] - hp.stft_frames
+    spec_id = f"spec{idx:06d}"
+    for j in range(0, size, hp.stft_stride):
+        k = j + hp.stft_frames
+
         # skip slices with no audio content
         if np.sum(mixture[j:k]) == 0:
             continue
-        file_id = f"{i:06d}"
-        mix_spec = spectrogram(mixture[j:k])[0]
-        mix_spec = mix_spec[np.newaxis,:,:]
+        slice_info = (spec_id, j, k)
 
-        vox_spec = spectrogram(vocal[j:k])[0]
-        vox_spec = vox_spec[:,hp.stft_frames//2]
-
-        dataset_ids.append(file_id)
-        np.save(os.path.join(mixture_path, file_id+".npy"), mix_spec)
-        np.save(os.path.join(vocal_path, file_id+".npy"), vox_spec)
+        dataset_ids.append(slice_info)
         i += 1
+    np.save(os.path.join(mixture_path, spec_id+".npy"), mix_spec)
+    np.save(os.path.join(vocal_path, spec_id+".npy"), vox_spec)
 with open(os.path.join(output_dir, 'dataset_ids.pkl'), 'wb') as f:
     random.shuffle(dataset_ids)
     pickle.dump(dataset_ids, f)

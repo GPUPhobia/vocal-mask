@@ -9,15 +9,19 @@ from utils import mulaw_quantize, inv_mulaw_quantize
 
 class SpectrogramDataset(Dataset):
     def __init__(self, data_path, dataset_ids):
-        self.path = os.path.join(data_path, "")
-        self.metadata = dataset_ids
+        self.data_path = data_path
         self.mix_path = os.path.join(data_path, "mix")
         self.vox_path = os.path.join(data_path, "vox")
+        self.metadata = dataset_ids
+        self.offset = hp.stft_frames//2
 
     def __getitem__(self, index):
-        file_id = self.metadata[index]
-        x = np.load(os.path.join(self.mix_path, f"{file_id}.npy"))
-        y = np.load(os.path.join(self.vox_path, f"{file_id}.npy"))
+        slice_info = self.metadata[index]
+        fname = slice_info[0]+".npy"
+        i = slice_info[1]
+        j = slice_info[2]
+        x = np.load(os.path.join(self.mix_path, fname), mmap_mode='r')[:,:,i:j]
+        y = np.load(os.path.join(self.vox_path, fname), mmap_mode='r')[:,i+self.offset]
         return x, y
 
     def __len__(self):
