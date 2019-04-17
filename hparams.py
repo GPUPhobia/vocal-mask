@@ -29,8 +29,9 @@ class hparams:
     # model parameters
     model_type='resnet'  # convnet or resnet
     res_dims = [
-        (32, 32, None), (32, 32, (2,2)),
-        (32, 64, None), (64, 64, None), (64, 16, (2,2)) 
+        (32, 32, None), (32, 32, None), (32, 32, (2,2)),
+        (32, 64, None), (64, 64, None), (64, 64, (2,2)),
+        (64, 16, None)
     ]
     # convert target spectrogram to mask at this activity threshold
     mask_threshold = 0.5
@@ -42,8 +43,8 @@ class hparams:
     #
     #----------------
     # training parameters
-    batch_size = 96
-    test_batch_size = 8
+    batch_size = 256
+    test_batch_size = 32
     nepochs = 100
     save_every_epoch = 2
     eval_every_epoch = 2
