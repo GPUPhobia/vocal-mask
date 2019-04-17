@@ -19,8 +19,8 @@ import matplotlib.pyplot as plt
 eval_dir = sys.argv[1]
 idx = int(sys.argv[2])
 
-mix_dir = os.path.join(eval_dir, 'mixture')
-vox_dir = os.path.join(eval_dir, 'vocal')
+mix_dir = os.path.join(eval_dir, 'mix')
+vox_dir = os.path.join(eval_dir, 'vox')
 
 def get_wav(path):
     wav = load_wav(path)
