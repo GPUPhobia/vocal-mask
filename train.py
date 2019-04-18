@@ -266,10 +266,8 @@ if __name__=="__main__":
     split = int(len(spec_info)*hp.train_test_split)
     test_specs = spec_info[:split]
     train_specs = spec_info[split:]
-    train_cache_name = f"train_{hp.stft_frames}_{hp.stft_stride}"
-    test_cache_name = f"test_{hp.stft_frames}_{hp.stft_stride}"
-    trainset = SpectrogramDataset(data_root, train_cache_name, train_specs)
-    testset = SpectrogramDataset(data_root, test_cache_name, test_specs)
+    trainset = SpectrogramDataset(data_root, train_specs)
+    testset = SpectrogramDataset(data_root, test_specs)
     print(f"# Training examples: {len(trainset)}")
     print(f"# Validation examples: {len(testset)}")
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
