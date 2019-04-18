@@ -13,7 +13,7 @@ class SpectrogramDataset(Dataset):
         self.data_path = data_path
         self.cache_dir = os.path.join(data_path, "cache")
         os.makedirs(self.cache_dir, exist_ok=True)
-        self.cache_path = os.path.join(self.cache_path, cache_name)
+        self.cache_path = os.path.join(self.cache_dir, cache_name)
         self.mix_path = os.path.join(data_path, "mix")
         self.vox_path = os.path.join(data_path, "vox")
         self.offset = hp.stft_frames//2
@@ -36,9 +36,10 @@ class SpectrogramDataset(Dataset):
             fname = spec[0]+".npy"
             for i in range(0, size, hp.stft_stride):
                 j = i + hp.stft_frames
-                S = np.load(os.path.join(self.mix_path, fname), mmap_mode='r')[:,i:j]
-                if np.sum(S) == 0:
-                    continue
+                if hp.filter_silent_frames:
+                    S = np.load(os.path.join(self.mix_path, fname), mmap_mode='r')[:,i:j]
+                    if np.sum(S) == 0:
+                        continue
                 slice_info = (spec[0], i, j)
                 metadata.append(slice_info)
         print(f"Dataset cached to {self.cache_path}")
