@@ -1,4 +1,4 @@
-"""Training WaveRNN Model.
+"""Training Vocal-Mask model
 
 usage: train.py [options] <data-root>
 

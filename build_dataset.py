@@ -1,7 +1,7 @@
 """
 Preprocess dataset
 
-usage: preprocess.py [options] <root-dir> <output-dir>
+usage: build_dataset.py [options] <root-dir> <output-dir>
 
 options:
     --parser=<parser_type>  Type of dataset parser (dsd or musdb, default dsd)

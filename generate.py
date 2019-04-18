@@ -1,6 +1,6 @@
-"""Training WaveRNN Model.
+"""Extract vocals from waveform.
 
-usage: train.py [options] <checkpoint-path> <input-wav>
+usage: generate.py [options] <checkpoint-path> <input-wav>
 
 options:
     --output-dir=<dir>      Directory where to save output wav [default: generated].
