@@ -268,6 +268,8 @@ if __name__=="__main__":
     train_specs = spec_info[split:]
     trainset = SpectrogramDataset(data_root, train_specs)
     testset = SpectrogramDataset(data_root, test_specs)
+    print(f"# Training examples: {len(trainset)}")
+    print(f"# Validation examples: {len(testset)}")
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
     testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.test_batch_size)
 
