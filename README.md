@@ -33,7 +33,7 @@ For the vocal spectrogram, only the center column of the image is kept. This is 
 For the convolutional neural network, we initially tried a fairly basic CNN with 4 convolution layers with ReLU activation and pooling layers, followed by 2 fully-connected layers. However, we were able to achieve a better validation loss with a small residual network.
 
 <p align="center">
-    <img src="assets/inference.png"/>
+    <img src="assets/model_inference.png"/>
 </p>
 
 At inference time, the input waveforms are sliced into overlapping windows. Each window is converted to Mel-weighted spectrogram and passed through the network to generate the binary mask. The masks are then concatenated and applied to the pre-Mel-weighted spectrogram (which preserves magnitude and phasing information) to produce the isolated vocal-only spectrogram. To produce the background-only spectrogram, the mask can be inverted. The audio can then be recovered via inverse STFT.
