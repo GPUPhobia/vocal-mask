@@ -21,7 +21,6 @@ import numpy as np
 import pickle
 from docopt import docopt
 
-# slices the musdb or dsd dataset into slices based on `window` and `stride`
 # 2 args, the musdb root directory, and the directory to save the output
 
 args = docopt(__doc__)
@@ -30,9 +29,6 @@ output_dir = args["<output-dir>"]
 parser_type = args["--parser"]
 if parser_type is None:
     parser_type = 'dsd'
-
-window = hp.hop_size*hp.stft_frames-1
-stride = hp.hop_size*hp.stft_stride
 
 
 if parser_type == 'musdb':
@@ -78,30 +74,19 @@ def load_samples(track):
         vocal = load_dsd_sample(vocal_track)
     return mixture, vocal
     
-dataset_ids = []
-i = 0
-print("slicing training samples")
+spec_info = []
+print("processing training samples")
 for idx, track in enumerate(tqdm(tracks)):
     mixture, vocal = load_samples(track)
     mix_spec = spectrogram(mixture, power=hp.mix_power_factor)[0][np.newaxis,:,:]
     vox_spec = spectrogram(vocal, power=hp.vox_power_factor)[0]
-    size = mix_spec.shape[2] - hp.stft_frames
     spec_id = f"spec{idx:06d}"
-    for j in range(0, size, hp.stft_stride):
-        k = j + hp.stft_frames
-
-        # skip slices with no audio content
-        if np.sum(mixture[j:k]) == 0:
-            continue
-        slice_info = (spec_id, j, k)
-
-        dataset_ids.append(slice_info)
-        i += 1
+    spec_info.append((spec_id, mix_spec.shape[2]))
     np.save(os.path.join(mixture_path, spec_id+".npy"), mix_spec)
     np.save(os.path.join(vocal_path, spec_id+".npy"), vox_spec)
-with open(os.path.join(output_dir, 'dataset_ids.pkl'), 'wb') as f:
-    random.shuffle(dataset_ids)
-    pickle.dump(dataset_ids, f)
+with open(os.path.join(output_dir, 'spec_info.pkl'), 'wb') as f:
+    random.shuffle(spec_info)
+    pickle.dump(spec_info, f)
 
 i = 0
 print("slicing eval samples")

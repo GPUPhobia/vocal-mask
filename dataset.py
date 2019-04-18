@@ -8,12 +8,22 @@ from hparams import hparams as hp
 from utils import mulaw_quantize, inv_mulaw_quantize
 
 class SpectrogramDataset(Dataset):
-    def __init__(self, data_path, dataset_ids):
+    def __init__(self, data_path, spec_info):
         self.data_path = data_path
         self.mix_path = os.path.join(data_path, "mix")
         self.vox_path = os.path.join(data_path, "vox")
-        self.metadata = dataset_ids
         self.offset = hp.stft_frames//2
+        self.metadata = self.get_slices(spec_info)
+
+    def get_slices(self, spec_info):
+        metadata = []
+        for spec in spec_info:
+            size = spec[1] - hp.stft_frames
+            for i in range(0, size, hp.stft_stride):
+                j = i + hp.stft_frames
+                slice_info = (spec[0], i, j)
+                metadata.append(slice_info)
+        return metadata
 
     def __getitem__(self, index):
         slice_info = self.metadata[index]

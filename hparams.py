@@ -49,6 +49,7 @@ class hparams:
     nepochs = 100
     save_every_epoch = 2
     eval_every_epoch = 2
+    valid_every_step = 1000
     num_evals = 4  # number of evals to generate
     train_test_split = 0.05 # reserve 5% of data for validation
     grad_norm = 10

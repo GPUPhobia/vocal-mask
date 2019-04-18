@@ -36,6 +36,8 @@ from lrschedule import noam_learning_rate_decay, step_learning_rate_decay
 global_step = 0
 global_epoch = 0
 global_test_step = 0
+train_losses = []
+valid_losses = []
 use_cuda = torch.cuda.is_available()
 
 def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch):
@@ -43,12 +45,16 @@ def save_checkpoint(device, model, optimizer, step, checkpoint_dir, epoch):
         checkpoint_dir, "checkpoint_step{:09d}.pth".format(step))
     optimizer_state = optimizer.state_dict()
     global global_test_step
+    global train_losses
+    global valid_losses
     torch.save({
         "state_dict": model.state_dict(),
         "optimizer": optimizer_state,
         "global_step": step,
         "global_epoch": epoch,
-        "global_test_step": global_test_step
+        "global_test_step": global_test_step,
+        "train_losses": train_losses,
+        "valid_losses":valid_losses
     }, checkpoint_path)
     print("Saved checkpoint:", checkpoint_path)
 
@@ -66,6 +72,8 @@ def load_checkpoint(path, model, optimizer, reset_optimizer):
     global global_step
     global global_epoch
     global global_test_step
+    global train_losses
+    global valid_losses
 
     print("Load checkpoint from: {}".format(path))
     checkpoint = _load(path)
@@ -78,6 +86,8 @@ def load_checkpoint(path, model, optimizer, reset_optimizer):
     global_step = checkpoint["global_step"]
     global_epoch = checkpoint["global_epoch"]
     global_test_step = checkpoint.get("global_test_step", 0)
+    train_losses = checkpoint["train_losses"]
+    valid_losses = checkpoint["valid_losses"]
 
     return model
 
@@ -166,9 +176,8 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
     """
     #criterion = torch.nn.MSELoss()
     criterion = torch.nn.BCELoss()
-    #criterion = torch.nn.BCEWithLogitsLoss()
 
-    global global_step, global_epoch, global_test_step
+    global global_step, global_epoch, global_test_step, train_losses, valid_losses
     while global_epoch < hp.nepochs:
         running_loss = 0
         model.train()
@@ -193,9 +202,14 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             running_loss += loss.item()
             avg_loss = running_loss / (i+1)
             global_step += 1
+            train_losses.append((global_step, loss.item()))
 
         # Validation
-        avg_valid_loss = validation_step(device, model, testloader, criterion)
+        if global_step != 0 and global_step % hp.valid_every_step == 0:
+            avg_valid_loss = validation_step(device, model, testloader, criterion)
+            valid_losses.append((global_step, avg_valid_loss))
+            print(f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
+
         # Evaluation
         if global_epoch % hp.eval_every_epoch == 0:
             evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
@@ -203,7 +217,6 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
         if global_epoch != 0 and global_epoch % hp.save_every_epoch == 0:
             save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
     
-        print(f"lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
         global_epoch += 1
 
 
@@ -248,13 +261,13 @@ if __name__=="__main__":
         global_test_step = True
 
     # create dataloaders
-    with open(os.path.join(data_root, 'dataset_ids.pkl'), 'rb') as f:
-        dataset_ids = pickle.load(f)
-    split = int(len(dataset_ids)*hp.train_test_split)
-    test_ids = dataset_ids[:split]
-    train_ids = dataset_ids[split:]
-    trainset = SpectrogramDataset(data_root, train_ids)
-    testset = SpectrogramDataset(data_root, test_ids)
+    with open(os.path.join(data_root, 'spec_info.pkl'), 'rb') as f:
+        spec_info = pickle.load(f)
+    split = int(len(spec_info)*hp.train_test_split)
+    test_specs = spec_info[:split]
+    train_specs = spec_info[split:]
+    trainset = SpectrogramDataset(data_root, train_specs)
+    testset = SpectrogramDataset(data_root, test_specs)
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
     testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.test_batch_size)
 
