@@ -37,7 +37,7 @@ class SpectrogramDataset(Dataset):
             for i in range(0, size, hp.stft_stride):
                 j = i + hp.stft_frames
                 if hp.filter_silent_frames:
-                    S = np.load(os.path.join(self.mix_path, fname), mmap_mode='r')[:,i:j]
+                    S = np.load(os.path.join(self.mix_path, fname), mmap_mode='r')[:,:,i:j]
                     if np.sum(S) == 0:
                         continue
                 slice_info = (spec[0], i, j)
