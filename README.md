@@ -20,7 +20,7 @@ However, the biggest issue with this approach is that recovering the audio from 
 
 The solution to this was fairly obvious in hindsight, which is to simply use the original STFT spectrogram instead of the Mel spectrogram. The audio can be recovered via inverse STFT, and although some information is lost, the results are quite good qualitatively. We still wanted to keep the Mel weightings, so what we did instead was to create spectrograms via STFT, and apply [Mel perceptual weighting](https://librosa.github.io/librosa/generated/librosa.core.perceptual_weighting.html). One big advantage of using the full STFT with the masking approach is that we are able to keep the phasing information when masking the mixture, which is necessary for recovering high quality audio.
 
-__Add diagrams and sample waveforms here to demonstrate that the masking approach has potential__
+*TODO: Add diagrams and sample waveforms here to demonstrate that the masking approach has potential*
 
 <p align="center">
     <img src="assets/model_approach.png"/>
@@ -40,6 +40,8 @@ At inference time, the input waveforms are sliced into overlapping windows. Each
 
 ### Past Works
 
+*TODO*
+
 ## Usage
 
 ### Dataset
@@ -58,6 +60,8 @@ The window size and striding for the slices are controlled by `hparams.stft_fram
 
 The first argument should be the same as the output directory of `build_dataset`.
 
+*TODO*
+
 ### Testing
 
 ```python generate.py <path to checkpoint file (*.pth)> <path to mixture wav>```  
@@ -68,6 +72,8 @@ This will generate a vocal wav file in the `generated` directory. Below are the 
 - `hparams.noise_gate` - If `mask_at_eval` is `False`, use this to set a cutoff where all values below this threshold are zeroed. Range (0,1).
 
 ## Results
+
+*TODO*
 
 ### Training
 
