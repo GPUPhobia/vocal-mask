@@ -204,11 +204,11 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             global_step += 1
             train_losses.append((global_step, loss.item()))
 
-        # Validation
-        if global_step != 0 and global_step % hp.valid_every_step == 0:
-            avg_valid_loss = validation_step(device, model, testloader, criterion)
-            valid_losses.append((global_step, avg_valid_loss))
-            print(f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
+            # Validation
+            if global_step != 0 and global_step % hp.valid_every_step == 0:
+                avg_valid_loss = validation_step(device, model, testloader, criterion)
+                valid_losses.append((global_step, avg_valid_loss))
+                print(f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
 
         # Evaluation
         if global_epoch % hp.eval_every_epoch == 0:
