@@ -6,9 +6,11 @@ options:
     -h, --help                  Show this help message and exit
 """
 import matplotlib.pyplot as plt
+import torch
 from docopt import docopt
 
 def _load(checkpoint_path):
+    use_cuda = torch.cuda.is_available()
     if use_cuda:
         checkpoint = torch.load(checkpoint_path)
     else:
