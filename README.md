@@ -1,4 +1,5 @@
 # Vocal Mask CNN
+<head><script src="http://api.html5media.info/1.1.8/html5media.min.js"></script></head>
 
 Audio source separation in the music domain.
 
@@ -78,7 +79,9 @@ This will generate a vocal wav file in the `generated` directory. Below are the 
 
 ### Training
 
-### Example Audio
+### Example Audio  
+Mixture  
+<audio src="assets/audio_samples/mixture/1.wav" controls preload></audio>
 
 ## Discussion
 
