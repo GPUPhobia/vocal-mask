@@ -68,8 +68,6 @@ This will generate a vocal wav file in the `generated` directory. Below are the 
 
 ## Results
 
-*TODO*
-
 ### Training
 
 A cyclic learning rate scheduler was used to train the model. A learning rate finder was used find reasonable learning rate boundaries [5]. Based on the plot below, the learning range was selected to be from 5e-5 to 2e-4.
@@ -137,7 +135,9 @@ The model converges very quickly within 2-3 epochs and eventually reaches a vali
 We found that the validation loss improved significantly the more training data was available, so although the qualitative results of our model are decent, it would likely further improve with more data. 
 
 Qualitatively, we found that our model worked best on acoustic or pop music where the vocals are more prominent in the mix. Fuller mixes have less variation between peaks and troughs in the spectrogram, which resulted in the model having a harder time picking out vocal features and creating less separation. 
-Compared to Wave-U-Net, we found that Wave-U-Net was able to produce stronger isolations, but at the cost of adding noticable noise artifacts. Our model was generally very liberal with cutting out audio, and could produce fairly high quality audio with good vocal isolation on some input, but tended to cut out too much vocal information in other input. In particular, our model seems to cut out lower frequency components to the vocal. This might be improved by changing how the input spectrograms are preprocessed. Compared with DeepConvSep, our model produced better separation on most inputs. 
+Compared to Wave-U-Net, we found that Wave-U-Net was able to produce stronger isolations, but at the cost of adding noticable noise artifacts. Our model was generally very liberal with cutting out audio, and could produce fairly high quality audio with good vocal isolation on some input, but tended to cut out too much vocal information in other input. In particular, our model seems to cut out lower frequency components to the vocal. This might be improved by changing how the input spectrograms are preprocessed. Compared with DeepConvSep, our model produced better separation on most inputs.
+
+All models had trouble with whispered or under-the-breath vocals, as can be heard near the beginning of **Sample 5**. Since the signal is soft relative to the background, the whispered vocal is buried within the input.
 
 There are several next steps that could be taken to improve the model as is. One area is to increase the amount of training examples, but this likely would not help with the full-mix problem. Another area is increasing the number of input channels. The model currently uses a single input channel containing only the monophonic magnitude spectrogram. Another possibility is to use two channel input, one channel for each of the [mid and side signals](https://www.izotope.com/en/blog/mastering/what-is-midside-processing.html). The mid signal is comprised of elements that are common to both the left and right audio signals, while the side signal is comprised of the difference between the left and right signals. This may help because in recorded music, the vocals and percussion tend to be mostly contained in the mid signal, while other accompaniment may be spread between mid and side signals. Stereo processing may also be possible (one channel for the left audio and the other channel for the right audio), but these will likely look more similar to each other than mid-side channels.
 
