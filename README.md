@@ -38,6 +38,8 @@ For the convolutional neural network, we initially tried a fairly basic CNN with
 
 At inference time, the input waveforms are sliced into overlapping windows. Each window is converted to Mel-weighted spectrogram and passed through the network to generate the binary mask. The masks are then concatenated and applied to the pre-Mel-weighted spectrogram (which preserves magnitude and phasing information) to produce the isolated vocal-only spectrogram. To produce the background-only spectrogram, the mask can be inverted. The audio can then be recovered via inverse STFT.
 
+A slightly modified version of ResNet18 was used for the model. The main change was for the initial downsampling to use a 7x3 kernel with no downsampling in the _x_ direction, since the input spectrograms have dimensions 513x25. 
+
 ### Past Works
 
 *TODO*
@@ -77,6 +79,20 @@ This will generate a vocal wav file in the `generated` directory. Below are the 
 *TODO*
 
 ### Training
+
+A cyclic learning rate scheduler was used to train the model. A learning rate finder was used find reasonable learning rate boundaries [5]. Based on the plot below, the learning range was selected to be from 5e-5 to 2e-4.
+
+Learning Rate  
+<p align="center">
+    <img src="assets/lr_find.png"/>
+</p>
+
+The model was trained for about 4 epochs in total - further training did not improve the validation loss.
+
+Training Loss  
+<p align="center">
+    <img src="assets/training_loss.png"/>
+</p>
 
 ### Example Audio  
 Audio examples were taken from [here](http://jordipons.me/apps/end-to-end-music-source-separation/) for comparison purposes.
