@@ -10,46 +10,66 @@ from tqdm import tqdm
 import numpy as np
 
 class ResBlock(nn.Module):
-    def __init__(self, dims):
-        super().__init__()
-        self.conv1 = nn.Conv2d(dims, dims, kernel_size=3, padding=1, bias=False)
-        self.conv2 = nn.Conv2d(dims, dims, kernel_size=3, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(dims)
-        self.bn2 = nn.BatchNorm2d(dims)
-
-    def forward(self, x):
-        residual = x
-        x = self.bn1(x)
-        x = F.relu(x)
-        x = self.conv1(x)
-        x = self.bn2(x)
-        x = F.relu(x)
-        x = self.conv2(x)
-        return x + residual
-
-class ResSkipBlock(nn.Module):
     def __init__(self, in_dims, out_dims):
         super().__init__()
-        self.conv0 = nn.Conv2d(in_dims, out_dims, kernel_size=1, stride=1, bias=False)
-        self.conv1 = nn.Conv2d(in_dims, out_dims, kernel_size=3, padding=1, stride=1, bias=False)
+        if in_dims == out_dims:
+            stride = 1
+            self.downsample = None
+        else:
+            stride = 2
+            self.downsample = nn.Sequential(
+                    nn.Conv2d(in_dims, out_dims, kernel_size=1, stride=stride, bias=False),
+                    nn.BatchNorm2d(out_dims)
+            )
+        self.conv1 = nn.Conv2d(in_dims, out_dims, kernel_size=3, padding=1, stride=stride, bias=False)
         self.conv2 = nn.Conv2d(out_dims, out_dims, kernel_size=3, padding=1, stride=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(in_dims)
+        self.relu = nn.ReLU(inplace=True)
+        self.bn1 = nn.BatchNorm2d(out_dims)
         self.bn2 = nn.BatchNorm2d(out_dims)
 
     def forward(self, x):
-        residual = self.conv0(x)
-        x = self.bn1(x)
-        x = F.relu(x)
-        x = self.conv1(x)
-        x = self.bn2(x)
-        x = F.relu(x)
-        x = self.conv2(x)
-        return x + residual
+        identity = x
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+        if self.downsample is not None:
+            identity = self.downsample(x)
+        out += identity
+        out = self.relu(out)
+        return out
+
+class PreActResBlock(nn.Module):
+    def __init__(self, in_planes, out_planes):
+        super().__init__()
+        if in_planes == out_planes:
+            stride = 1
+            self.shortcut = None
+        else:
+            stride = 2
+            self.shortcut = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+        self.bn1 = nn.BatchNorm2d(in_planes)
+        self.bn2 = nn.BatchNorm2d(out_planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, stride=1, padding=1, bias=False)
+
+    def forward(self, x):
+        identity = x
+        if self.shortcut is not None:
+            identity = self.shortcut(x)
+        out = self.relu(self.bn1(x))
+        out = self.conv1(out)
+        out = self.relu(self.bn2(out))
+        out = self.conv2(out)
+        return out + identity
 
 class Conv3x3(nn.Module):
-    def __init__(self, in_planes, out_planes, activation):
+    def __init__(self, in_planes, out_planes, activation, groups=1):
         super().__init__()
-        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=3, padding=1)
+        self.conv = nn.Conv2d(in_planes, out_planes, kernel_size=3, padding=1, groups=groups, bias=False)
         self.bn = nn.BatchNorm2d(out_planes)
         self.activation = activation
 
@@ -104,46 +124,74 @@ class ResNet(nn.Module):
         super().__init__()
         in_filters = res_dims[0][0]
         out_filters = res_dims[-1][1]
-        self.conv_in = nn.Conv2d(1, in_filters, kernel_size=3, padding=1, bias=False)
-        self.resnet_layers = nn.ModuleList()
-        downsample_factor = 1
-        for res_dim in res_dims:
-            in_planes, out_planes, downsample = res_dim
-            if in_planes == out_planes:
-                self.resnet_layers.append(ResBlock(in_planes))
-            else:
-                self.resnet_layers.append(ResSkipBlock(in_planes, out_planes))
-            if downsample is not None:
-                self.resnet_layers.append(nn.MaxPool2d(kernel_size=downsample[0], stride=downsample[1]))
-                downsample_factor *= downsample[1]
-        self.bn1 = nn.BatchNorm2d(out_filters)
-        self.dropout1 = nn.Dropout(p=0.5)
-        self.fcdims = out_filters*np.prod([dim//downsample_factor for dim in input_dims])
-        self.fc1 = FC(self.fcdims, 128, F.relu)
-        self.dropout2 = nn.Dropout(p=0.5)
-        self.fc2 = nn.Linear(128, output_dims)
+        block = PreActResBlock
+        self.conv_in = nn.Conv2d(1, in_filters, kernel_size=(7,3), 
+                                 padding=(3,1), stride=(2,1), bias=False)
+        self.resnet_layers = self._build_layers(res_dims, block)
+        self.bn = nn.BatchNorm2d(out_filters)
+        self.relu = nn.ReLU(inplace=True)
+        self.avg_pool = nn.AdaptiveAvgPool2d((1,1))
+        self.fc = nn.Linear(out_filters, output_dims)
+
+        for m in self.modules():
+            if isinstance(m, nn.Conv2d):
+                nn.init.kaiming_normal_(m.weight, mode='fan_out', nonlinearity='relu')
+            elif isinstance(m, nn.BatchNorm2d):
+                nn.init.constant_(m.weight, 1)
+                nn.init.constant_(m.bias, 0)
+
+    def _build_layers(self, res_dims, block):
+        layers = [block(*dim) for dim in res_dims]
+        return nn.Sequential(*layers)
 
     def forward(self, x):
         x = self.conv_in(x)
-        for layer in self.resnet_layers:
-            x = layer(x)
-        x = F.relu(self.bn1(x))
-        #x = self.maxpool1(x)
-        x = self.dropout1(x)
+        x = self.resnet_layers(x)
+        x = self.bn(x)
+        x = self.relu(x)
+        x = self.avg_pool(x)
         x = x.view(x.size(0), -1)
-        x = self.fc1(x)
-        x = self.dropout2(x)
-        x = self.fc2(x)
+        x = self.fc(x)
         return x
-    
+
+class ResNet18(nn.Module):
+    def __init__(self, input_dims, output_dims):
+        super().__init__()
+        res_dims = [
+            (64, 64), (64, 64), (64, 128),
+            (128, 128), (128, 128), (128, 256),
+            (256, 256), (256, 256), (256, 512),
+            (512, 512), (512, 512)
+        ]
+        self.resnet = ResNet(input_dims, output_dims, res_dims)
+
+    def forward(self, x):
+        return self.resnet(x)
+
+class ResNet34(nn.Module):
+    def __init__(self, input_dims, output_dims):
+        super().__init__()
+        res_dims = [
+            (64, 64), (64, 64), (64, 64), (64, 128),
+            (128, 128), (128, 128), (128, 128), (128, 128), (128, 256),
+            (256, 256), (256, 256), (256, 256), (256, 256), (256, 256),
+                (256, 256), (256, 512),
+            (512, 512), (512, 512), (512, 512)
+        ]
+        self.resnet = ResNet(input_dims, output_dims, res_dims)
+
+    def forward(self, x):
+        return self.resnet(x)
 
 class Model(nn.Module):
     def __init__(self, input_dims, output_dims, model_type):
         super().__init__()
         if model_type=='convnet':
             self.cnn = ConvNet(input_dims, output_dims)
-        elif model_type=='resnet':
-            self.cnn = ResNet(input_dims, output_dims, hp.res_dims)
+        elif model_type=='resnet18':
+            self.cnn = ResNet18(input_dims, output_dims)
+        elif model_type=='resnet34':
+            self.cnn = ResNet34(input_dims, output_dims)
         self.sigmoid = nn.Sigmoid()
         num_params(self)
     

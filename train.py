@@ -158,12 +158,17 @@ def validation_step(device, model, testloader, criterion):
     return avg_loss
 
 
-def get_learning_rate(global_step):
+def get_learning_rate(global_step, n_iters):
     if hp.fix_learning_rate:
         current_lr = hp.fix_learning_rate
     elif hp.lr_schedule_type == 'step':
         current_lr = step_learning_rate_decay(hp.initial_learning_rate, 
                     global_step, hp.step_gamma, hp.lr_step_interval)
+    elif hp.lr_schedule_type == 'cyclic':
+        step_size = n_iters//(2*hp.cycles_per_epoch)
+        cycle = np.floor(1 + global_step/(2*step_size))
+        x = abs(global_step/step_size - 2*cycle + 1)
+        current_lr = hp.min_lr + (hp.max_lr - hp.min_lr)*max(0, (1-x))
     else:
         current_lr = noam_learning_rate_decay(hp.initial_learning_rate, 
                     global_step, hp.noam_warm_up_steps)
@@ -178,6 +183,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
     criterion = torch.nn.BCELoss()
 
     global global_step, global_epoch, global_test_step, train_losses, valid_losses
+    n_iters = int(np.ceil(len(trainloader.dataset)/hp.batch_size))
     while global_epoch < hp.nepochs:
         running_loss = 0
         model.train()
@@ -188,7 +194,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             loss = criterion(y_pred, y)
 
             # calculate learning rate and update learning rate
-            current_lr = get_learning_rate(global_step)
+            current_lr = get_learning_rate(global_step, n_iters)
             for param_group in optimizer.param_groups:
                 param_group['lr'] = current_lr
 
@@ -202,19 +208,24 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             running_loss += loss.item()
             avg_loss = running_loss / (i+1)
             global_step += 1
+            if global_step % 100 == 0:
+                train_losses.append((global_step, loss.item()))
+            # save checkpoint
+            if global_step != 0 and global_step % hp.save_every_step == 0:
+                save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
 
-        # Validation
-        avg_valid_loss = validation_step(device, model, testloader, criterion)
-        train_losses.append((global_step, avg_loss))
-        valid_losses.append((global_step, avg_valid_loss))
-        print(f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
+            # Validation
+            if global_step != 0 and global_step % hp.valid_every_step == 0:
+                avg_valid_loss = validation_step(device, model, testloader, criterion)
+                valid_losses.append((global_step, avg_valid_loss))
+                print(f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
+
+        # save checkpoint
+        save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
 
         # Evaluation
         if global_epoch % hp.eval_every_epoch == 0:
             evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
-        # save checkpoint
-        if global_epoch != 0 and global_epoch % hp.save_every_epoch == 0:
-            save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
     
         global_epoch += 1
 
@@ -248,6 +259,8 @@ if __name__=="__main__":
         print("using exponential learning rate decay")
     elif hp.lr_schedule_type == 'noam':
         print("using noam learning rate decay")
+    elif hp.lr_schedule_type == 'cyclic':
+        print("using cyclic learning rate")
 
     # load checkpoint
     if checkpoint_path is None:

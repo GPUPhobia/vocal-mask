@@ -27,6 +27,7 @@ def load_checkpoint(path):
     return train_losses, valid_losses
 
 def plot_loss(train_losses, valid_losses):
+    print(sorted(valid_losses, key=lambda x: x[1]))
     plt.figure()
     plt.title("Binary Cross Entropy Loss")
     trainX, trainY = zip(*train_losses)
