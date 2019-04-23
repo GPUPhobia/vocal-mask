@@ -2,6 +2,7 @@ class hparams:
 
     #--------------     
     # audio processing parameters
+    fmin = 125
     fft_size = 1024
     stft_frames = 25
     stft_stride = 1
