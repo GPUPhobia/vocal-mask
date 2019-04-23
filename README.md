@@ -86,7 +86,7 @@ Wave-U-Net [6]
 [Sample 1](assets/audio_samples/wave_u_net/1.wav) [Sample 2](assets/audio_samples/wave_u_net/6.wav) [Sample 3](assets/audio_samples/wave_u_net/7.wav) [Sample 4](assets/audio_samples/wave_u_net/12.wav) [Sample 5](assets/audio_samples/wave_u_net/13.wav)
 
 Vocal-Mask  
-[Sample 1](assets/audio_samples/vocal_mask/1.wav) [Sample 2](assets/audio_samples/vocal_mask/6.wav) [Sample 3](assets/audio_samples/vocal_mask/7.wav) [Sample 4](assets/audio_samples/vocal_mask/12.wav) [Sample 5](assets/audio_samples/vocal_mask/13.wav)
+[Sample 1](assets/audio_samples/vocal_mask/generated_1.wav) [Sample 2](assets/audio_samples/vocal_mask/generated_6.wav) [Sample 3](assets/audio_samples/vocal_mask/generated_7.wav) [Sample 4](assets/audio_samples/vocal_mask/generated_12.wav) [Sample 5](assets/audio_samples/vocal_mask/generated_13.wav)
 
 Ground Truth  
 [Sample 1](assets/audio_samples/clean/1.wav) [Sample 2](assets/audio_samples/clean/6.wav) [Sample 3](assets/audio_samples/clean/7.wav) [Sample 4](assets/audio_samples/clean/12.wav) [Sample 5](assets/audio_samples/clean/13.wav)
