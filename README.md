@@ -79,17 +79,15 @@ This will generate a vocal wav file in the `generated` directory. Below are the 
 ### Training
 
 ### Example Audio  
-Mixtures 
-[Sample 1](assets/audio_samples/mixture/1.wav) [Sample 2](assets/audio_samples/mixture/6.wav) [Sample 3](assets/audio_samples/mixture/7.wav) [Sample 4](assets/audio_samples/mixture/12.wav) [Sample 5](assets/audio_samples/mixture/13.wav)
+Audio examples were taken from [here](http://jordipons.me/apps/end-to-end-music-source-separation/) for comparison purposes.
 
-Wave-U-Net [6]  
-[Sample 1](assets/audio_samples/wave_u_net/1.wav) [Sample 2](assets/audio_samples/wave_u_net/6.wav) [Sample 3](assets/audio_samples/wave_u_net/7.wav) [Sample 4](assets/audio_samples/wave_u_net/12.wav) [Sample 5](assets/audio_samples/wave_u_net/13.wav)
-
-Vocal-Mask  
-[Sample 1](assets/audio_samples/vocal_mask/generated_1.wav) [Sample 2](assets/audio_samples/vocal_mask/generated_6.wav) [Sample 3](assets/audio_samples/vocal_mask/generated_7.wav) [Sample 4](assets/audio_samples/vocal_mask/generated_12.wav) [Sample 5](assets/audio_samples/vocal_mask/generated_13.wav)
-
-Ground Truth  
-[Sample 1](assets/audio_samples/clean/1.wav) [Sample 2](assets/audio_samples/clean/6.wav) [Sample 3](assets/audio_samples/clean/7.wav) [Sample 4](assets/audio_samples/clean/12.wav) [Sample 5](assets/audio_samples/clean/13.wav)
+| Mixture | Wave-U-Net | Vocal-Mask | Ground Truth |
+|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
+| [Sample 1](https://drive.google.com/open?id=1ZO4g_1R3W1fVodf9RouIdywGIIAVJpvs) | [Sample 1](https://drive.google.com/open?id=1A1w2CKLJCrEX34VPRG1Yun5Hppgias1S) | [Sample 1](https://drive.google.com/open?id=1g4J3qaFVufbinhRMSbpzr6GKxzOshqLC) | [Sample 1](https://drive.google.com/open?id=1EBcu9BbGcXvAwgBHlkbRTmH-j97XLNGy) |
+| [Sample 2](https://drive.google.com/open?id=1alGKLhc0J8yc_8P4GpBgns0DRtJMcFP4) | [Sample 2](https://drive.google.com/open?id=1y2LiTnpf4khqqVQWEs_llHrwR9j8BWAy) | [Sample 2](https://drive.google.com/open?id=1K8r6v8JPKY0lK1rPalLgNWJThDsdZXXs) | [Sample 2](https://drive.google.com/open?id=1Vh3mKoC1fddg-6142pggoBreCCla7dCg) |
+| [Sample 3](https://drive.google.com/open?id=1GHGi8i-eRXNEnk88-iLxyOYa0uz8KDlM) | [Sample 3](https://drive.google.com/open?id=1tf1l4yJh8GG_o3pejD5TZm3s8Dw4IrZP) | [Sample 3](https://drive.google.com/open?id=1SkcZlRjWwReP-W9_vjE1AcR6vUjhHiLc) | [Sample 3](https://drive.google.com/open?id=1FiJIm1o3Iz6R52W8oDd2nMTH2INyPzDy) |
+| [Sample 4](https://drive.google.com/open?id=1l8wmEc_6yd32VPUYDYOUFZINqtK-Eif4) | [Sample 4](https://drive.google.com/open?id=1BZJDfQWgqJs_s-QWoU0DM4Ma1JZKPBYL) | [Sample 4](https://drive.google.com/open?id=10OKu1K_E34J7vyzJ6EzlsOoCoN0XA552) | [Sample 4](https://drive.google.com/open?id=1sok6Pd3MweEw0LDJ8TWG8CxprxPr6pia) |
+| [Sample 5](https://drive.google.com/open?id=1wHpW9AxXDg-BZMyxc4XndCHDgkZ5zaL7) | [Sample 5](https://drive.google.com/open?id=1ENCfiPg--AAF3cDRgN9_ebRR4v-W_QYF) | [Sample 5](https://drive.google.com/open?id=1apQwHXJybjv1gXSs8ABl8ONemE03syMr) | [Sample 5](https://drive.google.com/open?id=1Nr1oCb2NE0qZepbkBpJ6oR_6fDxbGvqW) |
 
 ## Discussion
 
@@ -101,4 +99,3 @@ Ground Truth
 [4] Liutkus, A., Stoter, F.R., Rafii, Z. The 2016 Signal Separation Evaluation Campaign. https://sigsep.github.io/datasets/dsd100.html  
 
 [5] Cyclic Learning Rates. https://arxiv.org/abs/1506.01186  
-[6] End-to-end music source separation: Audio examples. http://jordipons.me/apps/end-to-end-music-source-separation/
