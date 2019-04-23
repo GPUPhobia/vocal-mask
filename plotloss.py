@@ -5,9 +5,14 @@ usage: plotloss.py <checkpoint-path>
 options:
     -h, --help                  Show this help message and exit
 """
-import matplotlib.pyplot as plt
 import torch
 from docopt import docopt
+import platform
+
+import matplotlib
+if platform.system() == 'Darwin':
+    matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
 
 def _load(checkpoint_path):
     use_cuda = torch.cuda.is_available()
@@ -34,6 +39,8 @@ def plot_loss(train_losses, valid_losses):
     validX, validY = zip(*valid_losses)
     plt.plot(trainX, trainY, label="Training")
     plt.plot(validX, validY, label="Validation")
+    plt.xlabel("Iterations")
+    plt.ylabel("Loss")
     plt.legend()
     plt.show()
 
