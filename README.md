@@ -58,7 +58,8 @@ The window size and striding for the slices are controlled by `hparams.stft_fram
 
 ```python train.py <data dir> --checkpoint=<path to checkpoint file (*.pth)>```
 
-The first argument should be the same as the output directory of `build_dataset`.
+The first argument should be the same as the output directory of `build_dataset`.  
+A pretrained model for `hparams.model_type = 'resnet18'` can be downloaded here: [resnet18_step000033000.pth](https://drive.google.com/open?id=19QciqI26LXrJtQqPiilPzhQHNGbx00pP).
 
 *TODO*
 
@@ -81,4 +82,11 @@ This will generate a vocal wav file in the `generated` directory. Below are the 
 
 ## Discussion
 
-## Related Works
+## References
+
+[1] End-to-end music source separation: is it possible in the waveform domain? https://arxiv.org/abs/1810.12187  
+[2] Monoaural Audio Source Separation Using Deep Convolutional Neural Networks. http://mtg.upf.edu/node/3680  
+[3] Efficient Neural Audio Synthesis. https://arxiv.org/abs/1802.08435v1  
+[4] Liutkus, A., Stoter, F.R., Rafii, Z. The 2016 Signal Separation Evaluation Campaign. https://sigsep.github.io/datasets/dsd100.html  
+
+[5] Cyclic Learning Rates. https://arxiv.org/abs/1506.01186  
