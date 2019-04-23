@@ -1,5 +1,4 @@
 # Vocal Mask CNN
-<head><script src="http://api.html5media.info/1.1.8/html5media.min.js"></script></head>
 
 Audio source separation in the music domain.
 
@@ -80,8 +79,17 @@ This will generate a vocal wav file in the `generated` directory. Below are the 
 ### Training
 
 ### Example Audio  
-Mixture  
-<audio src="assets/audio_samples/mixture/1.wav" controls preload></audio>
+Mixtures 
+[Sample 1](assets/audio_samples/mixture/1.wav) [Sample 2](assets/audio_samples/mixture/6.wav) [Sample 3](assets/audio_samples/mixture/7.wav) [Sample 4](assets/audio_samples/mixture/12.wav) [Sample 5](assets/audio_samples/mixture/13.wav)
+
+Wave-U-Net [6]  
+[Sample 1](assets/audio_samples/wave_u_net/1.wav) [Sample 2](assets/audio_samples/wave_u_net/6.wav) [Sample 3](assets/audio_samples/wave_u_net/7.wav) [Sample 4](assets/audio_samples/wave_u_net/12.wav) [Sample 5](assets/audio_samples/wave_u_net/13.wav)
+
+Vocal-Mask  
+[Sample 1](assets/audio_samples/vocal_mask/1.wav) [Sample 2](assets/audio_samples/vocal_mask/6.wav) [Sample 3](assets/audio_samples/vocal_mask/7.wav) [Sample 4](assets/audio_samples/vocal_mask/12.wav) [Sample 5](assets/audio_samples/vocal_mask/13.wav)
+
+Ground Truth  
+[Sample 1](assets/audio_samples/clean/1.wav) [Sample 2](assets/audio_samples/clean/6.wav) [Sample 3](assets/audio_samples/clean/7.wav) [Sample 4](assets/audio_samples/clean/12.wav) [Sample 5](assets/audio_samples/clean/13.wav)
 
 ## Discussion
 
@@ -93,3 +101,4 @@ Mixture
 [4] Liutkus, A., Stoter, F.R., Rafii, Z. The 2016 Signal Separation Evaluation Campaign. https://sigsep.github.io/datasets/dsd100.html  
 
 [5] Cyclic Learning Rates. https://arxiv.org/abs/1506.01186  
+[6] End-to-end music source separation: Audio examples. http://jordipons.me/apps/end-to-end-music-source-separation/
