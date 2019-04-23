@@ -89,6 +89,34 @@ Audio examples were taken from [here](http://jordipons.me/apps/end-to-end-music-
 | [Sample 4](https://drive.google.com/open?id=1l8wmEc_6yd32VPUYDYOUFZINqtK-Eif4) | [Sample 4](https://drive.google.com/open?id=1BZJDfQWgqJs_s-QWoU0DM4Ma1JZKPBYL) | [Sample 4](https://drive.google.com/open?id=1_6Bs1sSxPMO1InelVyo49OsQ4nEK8Zsj) | [Sample 4](https://drive.google.com/open?id=10OKu1K_E34J7vyzJ6EzlsOoCoN0XA552) | [Sample 4](https://drive.google.com/open?id=1sok6Pd3MweEw0LDJ8TWG8CxprxPr6pia) |
 | [Sample 5](https://drive.google.com/open?id=1wHpW9AxXDg-BZMyxc4XndCHDgkZ5zaL7) | [Sample 5](https://drive.google.com/open?id=1ENCfiPg--AAF3cDRgN9_ebRR4v-W_QYF) | [Sample 5](https://drive.google.com/open?id=1K1ztdEJo46WCwkmEAY6APTRHA88uPxNJ) | [Sample 5](https://drive.google.com/open?id=1apQwHXJybjv1gXSs8ABl8ONemE03syMr) | [Sample 5](https://drive.google.com/open?id=1Nr1oCb2NE0qZepbkBpJ6oR_6fDxbGvqW) |
 
+### Spectrogram Comparisons  
+Note: The ground truth and Wave-U-Net samples have lower sample rate, so the spectrogram is cut off above 4092Hz. 
+
+Sample 1 Spectrograms  
+<p align="center">
+    <img src="assets/specs1.png"/>
+</p>
+
+Sample 2 Spectrograms  
+<p align="center">
+    <img src="assets/specs2.png"/>
+</p>
+
+Sample 3 Spectrograms  
+<p align="center">
+    <img src="assets/specs3.png"/>
+</p>
+
+Sample 4 Spectrograms  
+<p align="center">
+    <img src="assets/specs4.png"/>
+</p>
+
+Sample 5 Spectrograms  
+<p align="center">
+    <img src="assets/specs5.png"/>
+</p>
+
 ## Discussion
 
 ## References
