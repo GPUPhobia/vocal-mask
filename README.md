@@ -104,7 +104,7 @@ Audio examples were taken from [here](http://jordipons.me/apps/end-to-end-music-
 | [Sample 5](https://drive.google.com/open?id=1wHpW9AxXDg-BZMyxc4XndCHDgkZ5zaL7) | [Sample 5](https://drive.google.com/open?id=1ENCfiPg--AAF3cDRgN9_ebRR4v-W_QYF) | [Sample 5](https://drive.google.com/open?id=19bQGqkKEbHjYrQ-_VB0TqaSORVmu1xGu) | [Sample 5](https://drive.google.com/open?id=1K1ztdEJo46WCwkmEAY6APTRHA88uPxNJ) | [Sample 5](https://drive.google.com/open?id=1Nr1oCb2NE0qZepbkBpJ6oR_6fDxbGvqW) |
 
 ### Spectrogram Comparisons  
-Note: The Ground Truth, Wave-U-Net, and DeepConvSep samples have lower sample rate, so the spectrogram is cut off above 4092Hz. 
+Note: The Ground Truth, Wave-U-Net, and DeepConvSep samples have lower sample rate, so the spectrogram is cut off above 4096Hz. 
 
 Sample 1 Spectrograms  
 <p align="center">
