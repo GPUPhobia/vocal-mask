@@ -28,7 +28,6 @@ from torch.utils.data import DataLoader
 
 from audio import *
 from model import build_model
-from loss_function import nll_loss
 from dataset import basic_collate, SpectrogramDataset
 from hparams import hparams as hp
 from lrschedule import noam_learning_rate_decay, step_learning_rate_decay

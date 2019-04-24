@@ -30,6 +30,7 @@ from model import build_model
 from hparams import hparams as hp
 import musdb
 import museval
+from utils import pad_audio, resample, resize, replicate_channels
 
 use_cuda = torch.cuda.is_available()
 device = None
@@ -50,11 +51,6 @@ def load_checkpoint(path, model):
     model.load_state_dict(checkpoint["state_dict"])
     return model
 
-def pad_audio(audio, sr):
-    hop_len = (sr//hp.sample_rate)*hp.hop_size
-    left_over = hop_len - audio.shape[0]%hop_len
-    return np.pad(audio, (0, left_over), 'constant', constant_values=0)
-
 def evaluate(track):
     mix_audio, orig_sr, mix_channels = track.audio, track.rate, track.audio.shape[1]
     if mix_channels > 1:
@@ -64,28 +60,17 @@ def evaluate(track):
     mono_audio = pad_audio(mono_audio, orig_sr)
     if orig_sr != hp.sample_rate:
         mono_audio = librosa.resample(mono_audio, orig_sr, hp.sample_rate)
-    vox, bg = model.generate(device, mono_audio)
-    vox = librosa.resample(vox, hp.sample_rate, orig_sr)[:mix_audio.shape[0]]
-    bg = librosa.resample(bg, hp.sample_rate, orig_sr)[:mix_audio.shape[0]]
+    estimates = model.generate(device, mono_audio, targets=["vocals","accompaniment"])
+    if hp.sample_rate != orig_sr:
+        resample(estimates, orig_sr)
+    resize(estimates, mix_audio)
     if mix_channels > 1:
-        vox = np.tile(vox, (mix_channels,1)).T
-        bg = np.tile(bg, (mix_channels,1)).T
-    estimates = {
-        'vocals': vox,
-        'accompaniment': bg
-    }
+        replicate_channels(estimates, mix_channels)
     scores = museval.eval_mus_track(
         track, estimates, output_dir='bss_evals')
     print(scores)
     return estimates
 
-def generate(device, model, path, output_dir):
-    wav = load_wav(path)
-    y = model.generate(device, wav)
-    file_id = path.split('/')[-1].split('.')[0]
-    outpath = os.path.join(output_dir, f'generated_{file_id}.wav')
-    save_wav(y, outpath)
-    
 
 if __name__=="__main__":
     args = docopt(__doc__)
@@ -104,6 +89,7 @@ if __name__=="__main__":
     print("loading model from checkpoint:{}".format(checkpoint_path))
 
     mus = musdb.DB(root_dir=musdb_dir, is_wav=True)
-    tracks = mus.load_mus_tracks(subsets=['test'])
+    tracks = mus.load_mus_tracks()
 
-    evaluate(tracks[0])
+    for track in tracks:
+        evaluate(track)

@@ -228,7 +228,7 @@ class Model(nn.Module):
         return (np.vstack(output).astype(np.float32).T, 
                     np.vstack(mask).astype(np.float32).T)
 
-    def generate(self, device, wav):
+    def generate(self, device, wav, targets=['vocals','accompaniment']):
         """
         TODO: Zero-pad the spectrogram or waveform so that output is same
         length as input
@@ -258,7 +258,13 @@ class Model(nn.Module):
             output_bg.append(zb)
         S_vox = np.vstack(output_vox).T
         S_bg = np.vstack(output_bg).T
-        return inv_spectrogram(S_vox), inv_spectrogram(S_bg)
+        estimates = {}
+        if 'vocals' in targets:
+            estimates['vocals'] = inv_spectrogram(S_vox)
+        if 'accompaniment' in targets:
+            estimates['accompaniment'] = inv_spectrogram(S_bg)
+        return estimates
+
 
 def build_model():
     fft_bins = hp.fft_size//2+1
