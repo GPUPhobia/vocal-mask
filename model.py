@@ -229,20 +229,26 @@ class Model(nn.Module):
                     np.vstack(mask).astype(np.float32).T)
 
     def generate(self, device, wav):
+        """
+        TODO: Zero-pad the spectrogram or waveform so that output is same
+        length as input
+        """
         self.eval()
-        window = hp.hop_size*hp.stft_frames - 1
-        stride = hp.hop_size
-        count = len(wav)
+        mel_spec, stft = spectrogram(wav, power=hp.mix_power_factor)
+        padding = hp.stft_frames//2
+        mel_spec = np.pad(mel_spec, ((0,0),(padding,padding)), 'constant', constant_values=0) 
+        window = hp.stft_frames
+        size = mel_spec.shape[1]
         output = []
-        end = count - (count%stride) - window
-        for i in tqdm(range(0, end//stride)):
-            x, stftx = spectrogram(wav[i*stride:i*stride+window], power=hp.mix_power_factor)
+        end = size - window
+        for i in tqdm(range(0, end+1)):
+            x = mel_spec[:,i:i+window]
             _x = torch.FloatTensor(x[np.newaxis,np.newaxis,:,:]).to(device)
             _y = self.forward(_x)
             y = _y.to(torch.device('cpu')).detach().numpy()
             if hp.mask_at_eval:
                 y = y > hp.eval_mask_threshold
-            z = stftx[:,hp.stft_frames//2]*y
+            z = stft[:,i]*y
             if not hp.mask_at_eval:
                 z = z*(z > hp.noise_gate)
             output.append(z)
