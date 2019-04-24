@@ -239,7 +239,8 @@ class Model(nn.Module):
         mel_spec = np.pad(mel_spec, ((0,0),(padding,padding)), 'constant', constant_values=0) 
         window = hp.stft_frames
         size = mel_spec.shape[1]
-        output = []
+        output_vox = []
+        output_bg = []
         end = size - window
         for i in tqdm(range(0, end+1)):
             x = mel_spec[:,i:i+window]
@@ -248,12 +249,16 @@ class Model(nn.Module):
             y = _y.to(torch.device('cpu')).detach().numpy()
             if hp.mask_at_eval:
                 y = y > hp.eval_mask_threshold
+                yb = y <= hp.eval_mask_threshold
             z = stft[:,i]*y
+            zb = stft[:,i]*yb
             if not hp.mask_at_eval:
                 z = z*(z > hp.noise_gate)
-            output.append(z)
-        S = np.vstack(output).T
-        return inv_spectrogram(S)
+            output_vox.append(z)
+            output_bg.append(zb)
+        S_vox = np.vstack(output_vox).T
+        S_bg = np.vstack(output_bg).T
+        return inv_spectrogram(S_vox), inv_spectrogram(S_bg)
 
 def build_model():
     fft_bins = hp.fft_size//2+1

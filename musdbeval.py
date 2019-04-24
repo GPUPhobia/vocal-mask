@@ -57,7 +57,6 @@ def pad_audio(audio, sr):
 
 def evaluate(track):
     mix_audio, orig_sr, mix_channels = track.audio, track.rate, track.audio.shape[1]
-    print(mix_audio.shape)
     if mix_channels > 1:
         mono_audio = librosa.to_mono(mix_audio.T)
     else:
@@ -65,17 +64,19 @@ def evaluate(track):
     mono_audio = pad_audio(mono_audio, orig_sr)
     if orig_sr != hp.sample_rate:
         mono_audio = librosa.resample(mono_audio, orig_sr, hp.sample_rate)
-    estimate = model.generate(device, mono_audio)
-    estimate = librosa.resample(estimate, hp.sample_rate, orig_sr)[:mix_audio.shape[0]]
+    vox, bg = model.generate(device, mono_audio)
+    vox = librosa.resample(vox, hp.sample_rate, orig_sr)[:mix_audio.shape[0]]
+    bg = librosa.resample(bg, hp.sample_rate, orig_sr)[:mix_audio.shape[0]]
     if mix_channels > 1:
-        estimate = np.tile(estimate, (mix_channels,1)).T
-    print(estimate.shape)
+        vox = np.tile(vox, (mix_channels,1)).T
+        bg = np.tile(bg, (mix_channels,1)).T
     estimates = {
-        'vocals': estimate
+        'vocals': vox,
+        'accompaniment': bg
     }
-    #scores = museval.eval_mus_track(
-    #    track, estimates, output_dir='bss_evals')
-    #print(scores)
+    scores = museval.eval_mus_track(
+        track, estimates, output_dir='bss_evals')
+    print(scores)
     return estimates
 
 def generate(device, model, path, output_dir):
@@ -105,6 +106,4 @@ if __name__=="__main__":
     mus = musdb.DB(root_dir=musdb_dir, is_wav=True)
     tracks = mus.load_mus_tracks(subsets=['test'])
 
-    if mus.test(evaluate):
-        print("valid func")
-
+    evaluate(tracks[0])
