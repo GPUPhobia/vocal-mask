@@ -274,9 +274,14 @@ if __name__=="__main__":
     # create dataloaders
     with open(os.path.join(data_root, 'spec_info.pkl'), 'rb') as f:
         spec_info = pickle.load(f)
-    split = int(len(spec_info)*hp.train_test_split)
-    test_specs = spec_info[:split]
-    train_specs = spec_info[split:]
+    test_path = os.path.join(data_root, "test")
+    with open(os.path.join(test_path, "test_spec_info.pkl"), 'rb') as f:
+        test_spec_info = pickle.load(f)
+    #split = int(len(spec_info)*hp.train_test_split)
+    #test_specs = spec_info[:split]
+    #train_specs = spec_info[split:]
+    test_specs = test_spec_info
+    train_specs = spec_info
     trainset = SpectrogramDataset(data_root, train_specs)
     testset = SpectrogramDataset(data_root, test_specs)
     print(f"# Training examples: {len(trainset)}")
