@@ -129,6 +129,16 @@ Sample 5 Spectrograms
     <img src="assets/specs5.png"/>
 </p>
 
+### Quantitative Comparisons
+
+Below are quantitative evaluations of the signal and separation quality based on BSS Eval metrics. Shown are the median SDR values when applying the model to the MusDB18 test set. Higher values indicate better separation and signal quality.
+
+| Model | Vocal SDR | Accompaniment SDR |
+|-------------|-----------|----------|
+| DeepConvSep | 2.37 | N/A |
+| Wave-U-Net | 4.60 | 11.87 |
+| Vocal-Mask (Initial) | 2.84 | 6.89 |
+
 ## Discussion  
 
 The model converges very quickly within 2-3 epochs and eventually reaches a validation loss of about 0.165. 
