@@ -31,6 +31,7 @@ from model import build_model
 from dataset import basic_collate, SpectrogramDataset
 from hparams import hparams as hp
 from lrschedule import noam_learning_rate_decay, step_learning_rate_decay
+import discordhook
 
 global_step = 0
 global_epoch = 0
@@ -147,6 +148,7 @@ def validation_step(device, model, testloader, criterion):
     """
 
     model.eval()
+    print("")
     running_loss = 0
     for i, (x, y) in enumerate(tqdm(testloader)):
         x, y = x.to(device), y.to(device)
@@ -207,8 +209,11 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             running_loss += loss.item()
             avg_loss = running_loss / (i+1)
             global_step += 1
-            if global_step % 100 == 0:
+            if global_step % hp.train_loss_every_step == 0:
                 train_losses.append((global_step, loss.item()))
+
+            if global_step % 1000 == 0:
+                discordhook.send_message(f"Step:{global_step}, lr:{current_lr}, training loss:{loss.item():.6f}")
             # save checkpoint
             if global_step != 0 and global_step % hp.save_every_step == 0:
                 save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
@@ -217,7 +222,9 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             if global_step != 0 and global_step % hp.valid_every_step == 0:
                 avg_valid_loss = validation_step(device, model, testloader, criterion)
                 valid_losses.append((global_step, avg_valid_loss))
-                print(f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
+                msg = (f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
+                print(msg)
+                discordhook.send_message(msg)
 
         # save checkpoint
         save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
@@ -283,7 +290,9 @@ if __name__=="__main__":
     test_specs = test_spec_info
     train_specs = spec_info
     trainset = SpectrogramDataset(data_root, train_specs)
-    testset = SpectrogramDataset(data_root, test_specs)
+    testset = SpectrogramDataset(test_path, test_specs)
+    random.shuffle(testset.metadata)
+    testset.metadata = testset.metadata[:hp.validation_size]
     print(f"# Training examples: {len(trainset)}")
     print(f"# Validation examples: {len(testset)}")
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)

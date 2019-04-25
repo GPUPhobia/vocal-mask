@@ -23,7 +23,8 @@ class hparams:
     #
     #----------------
     # model parameters
-    model_type='resnet18'  # convnet or resnet
+    model_type='resnet34'  # convnet or resnet
+    kernel = (3, 3)
     # convert target spectrogram to mask at this activity threshold
     mask_threshold = 0.5
     # convert output to binary mask at inference time
@@ -38,11 +39,13 @@ class hparams:
     # training parameters
     batch_size = 256
     test_batch_size = 32
-    nepochs = 4
-    valid_every_step = 1000
-    save_every_step = 1000
+    nepochs = 50
+    train_loss_every_step = 100
+    valid_every_step = 7517
+    save_every_step = 7517
     eval_every_epoch = 1
     num_evals = 4  # number of evals to generate
+    validation_size = 256000
     train_test_split = 0.05 # reserve 5% of data for validation
     grad_norm = 10
     #learning rate parameters
@@ -54,8 +57,8 @@ class hparams:
     step_gamma = 0.1
     lr_step_interval = 8000
     # for cyclic learning rate schedule
-    min_lr = 5e-5
-    max_lr = 2e-4
+    min_lr = 3e-5
+    max_lr = 1e-4
     cycles_per_epoch = 2
 
     adam_beta1=0.9
