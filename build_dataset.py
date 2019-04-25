@@ -32,7 +32,7 @@ if parser_type is None:
 
 
 if parser_type == 'musdb':
-    dataset = musdb.DB(root_dir=root_dir)
+    dataset = musdb.DB(root_dir=root_dir, is_wav=True)
     tracks = dataset.load_mus_tracks(subsets=['train'])
     eval_tracks = dataset.load_mus_tracks(subsets=['test'])
 else:
@@ -48,14 +48,20 @@ vocal_path = os.path.join(output_dir, "vox")
 eval_path = os.path.join(output_dir, "eval")
 eval_mix_path = os.path.join(eval_path, "mix")
 eval_vox_path = os.path.join(eval_path, "vox")
+test_path = os.path.join(output_dir, "test")
+test_mix_path = os.path.join(test_path, "mix")
+test_vox_path = os.path.join(test_path,"vox")
 os.makedirs(mixture_path, exist_ok=True)
 os.makedirs(vocal_path, exist_ok=True)
 os.makedirs(eval_mix_path, exist_ok=True)
 os.makedirs(eval_vox_path, exist_ok=True)
+os.makedirs(test_mix_path, exist_ok=True)
+os.makedirs(test_vox_path, exist_ok=True)
 
 def load_musdb_sample(track):
     audio = track.audio
-    sample_rate = track.rate
+    sample_rate = 44100
+    #sample_rate = track.rate
     audio = librosa.to_mono(audio.T)
     if sample_rate != hp.sample_rate:
         audio = librosa.resample(audio, sample_rate, hp.sample_rate)
@@ -87,6 +93,20 @@ for idx, track in enumerate(tqdm(tracks)):
 with open(os.path.join(output_dir, 'spec_info.pkl'), 'wb') as f:
     random.shuffle(spec_info)
     pickle.dump(spec_info, f)
+
+test_spec_info = []
+print("processing validation samples")
+for idx, track in enumerate(tqdm(eval_tracks)):
+    mixture, vocal = load_samples(track)
+    mix_spec = spectrogram(mixture, power=hp.mix_power_factor)[0][np.newaxis,:,:]
+    vox_spec = spectrogram(vocal, power=hp.vox_power_factor)[0]
+    spec_id = f"spec{idx:06d}"
+    test_spec_info.append((spec_id, mix_spec.shape[2]))
+    np.save(os.path.join(test_mix_path, spec_id+".npy"), mix_spec)
+    np.save(os.path.join(test_vox_path, spec_id+".npy"), vox_spec)
+with open(os.path.join(test_path, 'test_spec_info.pkl'), 'wb') as f:
+    random.shuffle(test_spec_info)
+    pickle.dump(test_spec_info, f)
 
 i = 0
 print("slicing eval samples")
