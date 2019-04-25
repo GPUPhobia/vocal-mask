@@ -52,7 +52,7 @@ def load_checkpoint(path, model):
 
 def generate(device, model, path, output_dir):
     wav = load_wav(path)
-    y = model.generate(device, wav)
+    y = model.generate(device, wav, targets=["vocals"])["vocals"]
     file_id = path.split('/')[-1].split('.')[0]
     outpath = os.path.join(output_dir, f'generated_{file_id}.wav')
     save_wav(y, outpath)
