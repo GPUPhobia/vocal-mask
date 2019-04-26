@@ -60,7 +60,7 @@ def evaluate(track):
     mono_audio = pad_audio(mono_audio, orig_sr)
     if orig_sr != hp.sample_rate:
         mono_audio = librosa.resample(mono_audio, orig_sr, hp.sample_rate)
-    estimates = model.generate(device, mono_audio, targets=["vocals","accompaniment"])
+    estimates = model.generate_wav(device, mono_audio)
     if hp.sample_rate != orig_sr:
         resample(estimates, orig_sr)
     resize(estimates, mix_audio)
