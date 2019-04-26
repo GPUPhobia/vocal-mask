@@ -24,15 +24,14 @@ class hparams:
     #----------------
     # model parameters
     model_type='resnet34'  # convnet or resnet
+    init_conv_kernel = (11, 3)
     kernel = (3, 3)
     # convert target spectrogram to mask at this activity threshold
     mask_threshold = 0.5
     # convert output to binary mask at inference time
-    mask_at_eval = True
+    mask_at_eval = False
     # threshold for masking at inference time
-    eval_mask_threshold = 0.5
-    # if not mask_at_eval is False, zero out values under the noise_gate
-    noise_gate = 0.3
+    eval_mask_threshold = 0.1
     #----------------
     #
     #----------------
@@ -46,7 +45,6 @@ class hparams:
     eval_every_epoch = 1
     num_evals = 4  # number of evals to generate
     validation_size = 256000
-    train_test_split = 0.05 # reserve 5% of data for validation
     grad_norm = 10
     #learning rate parameters
     initial_learning_rate=1e-4

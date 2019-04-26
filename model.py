@@ -41,6 +41,9 @@ class ResBlock(nn.Module):
         out = self.relu(out)
         return out
 
+def calc_padding(kernel):
+    return list((i//2 for i in kernel))
+
 class PreActResBlock(nn.Module):
     def __init__(self, in_planes, out_planes, kernel_size=(3,3)):
         super().__init__()
@@ -50,7 +53,7 @@ class PreActResBlock(nn.Module):
         else:
             stride = 2
             self.shortcut = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
-        padding = list((i//2 for i in kernel_size))
+        padding = calc_padding(kernel_size)
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.bn2 = nn.BatchNorm2d(out_planes)
         self.relu = nn.ReLU(inplace=True)
@@ -126,8 +129,13 @@ class ResNet(nn.Module):
         block = PreActResBlock
         in_filters = res_dims[0][0]
         out_filters = res_dims[-1][1]
-        self.conv_in = nn.Conv2d(1, in_filters, kernel_size=(11,3), 
-                                 padding=(5,1), stride=(2,1), bias=False)
+        init_padding = calc_padding(hp.init_conv_kernel)
+        self.conv_in = nn.Conv2d(1, 
+                                 in_filters, 
+                                 kernel_size=hp.init_conv_kernel, 
+                                 padding=init_padding, 
+                                 stride=(2,1), 
+                                 bias=False)
         self.resnet_layers = self._build_layers(res_dims, block)
         self.bn = nn.BatchNorm2d(out_filters)
         self.relu = nn.ReLU(inplace=True)
@@ -201,71 +209,73 @@ class Model(nn.Module):
         x = self.sigmoid(x)
         return x
 
-    def generate_eval(self, device, wav):
-        """Given a waveform, generate the vocal-only spectrogram slices.
-        Another network will need to convert the spectrogram slices back
-        into waveforms that can then be concatenated"""
+    def generate_specs(self, device, wav):
+        """Generate the vocal-accompaniment separated spectrograms"""
 
-        self.eval()
-        window = hp.hop_size*hp.stft_frames - 1
-        stride = hp.hop_size
-        count = len(wav)
-        i = 0
-        output = []
-        mask = []
-        while (i+window <= count):
-            sample = wav[i:i+window]
-            x = spectrogram(sample, power=hp.mix_power_factor)[0]
-            _x = x[np.newaxis,np.newaxis,:,:]
-            _x = torch.FloatTensor(_x).to(device)
-            _y = self.forward(_x)
-            y = _y.to(torch.device('cpu')).detach().numpy()
-            if hp.mask_at_eval:
-                y = y > 0.5
-            z = x[:,hp.stft_frames//2]*y
-            output.append(z)
-            mask.append(y)
-            i += stride
-        return (np.vstack(output).astype(np.float32).T, 
-                    np.vstack(mask).astype(np.float32).T)
+        mask, stft = self.predict_mask(device, wav)
+        Mvox, Macc = self.process_mask(mask)
+        Svox = self.apply_mask(Mvox, stft)
+        Sacc = self.apply_mask(Macc, stft)
+        results = {
+            "mask": { "vocals": Mvox, "accompaniment": Macc },
+            "spec": { "vocals": Svox, "accompaniment": Sacc }
+        }
+        return results
 
-    def generate(self, device, wav, targets=['vocals','accompaniment']):
+    def generate_wav(self, device, wav):
+        """Generate the vocal-accompaniment separated waveforms"""
+
+        S = self.generate_specs(device, wav)
+        estimates = {
+            "vocals": inv_spectrogram(S["spec"]["vocals"]),
+            "accompaniment": inv_spectrogram(S["spec"]["accompaniment"])
+        }
+        return estimates
+
+    def predict_mask(self, device, wav):
+        """Perform a forward pass through the model to generate the
+        vocal soft masks. 
         """
-        TODO: Zero-pad the spectrogram or waveform so that output is same
-        length as input
-        """
+
         self.eval()
         mel_spec, stft = spectrogram(wav, power=hp.mix_power_factor)
         padding = hp.stft_frames//2
         mel_spec = np.pad(mel_spec, ((0,0),(padding,padding)), 'constant', constant_values=0) 
         window = hp.stft_frames
         size = mel_spec.shape[1]
-        output_vox = []
-        output_bg = []
+        mask = []
         end = size - window
         for i in tqdm(range(0, end+1)):
             x = mel_spec[:,i:i+window]
             _x = torch.FloatTensor(x[np.newaxis,np.newaxis,:,:]).to(device)
             _y = self.forward(_x)
             y = _y.to(torch.device('cpu')).detach().numpy()
-            if hp.mask_at_eval:
-                y = y > hp.eval_mask_threshold
-                yb = y <= hp.eval_mask_threshold
-            else:
-                y = y*(y > hp.eval_mask_threshold)
-                yb = y <= hp.eval_mask_threshold
-            z = stft[:,i]*y
-            zb = stft[:,i]*yb
-            output_vox.append(z)
-            output_bg.append(zb)
-        S_vox = np.vstack(output_vox).T
-        S_bg = np.vstack(output_bg).T
-        estimates = {}
-        if 'vocals' in targets:
-            estimates['vocals'] = inv_spectrogram(S_vox)
-        if 'accompaniment' in targets:
-            estimates['accompaniment'] = inv_spectrogram(S_bg)
-        return estimates
+            mask.append(y)
+        mask = np.vstack(mask).T
+        return mask, stft
+
+    def apply_mask(self, mask, stft):
+        return stft*mask
+
+    def process_mask(self, mask):
+        if hp.mask_at_eval:
+            Mvox, Macc = self.get_binary_mask(mask)
+        else:
+            Mvox, Macc = self.get_soft_mask(mask)
+        return Mvox, Macc
+
+    def get_binary_mask(self, mask):
+        Mvox = mask > hp.eval_mask_threshold
+        Macc = mask <= hp.eval_mask_threshold
+        return Mvox, Macc
+
+    def get_soft_mask(self, mask):
+        mask = mask/(np.max(mask))
+        Mvox = mask * (mask > hp.eval_mask_threshold)
+        inv_mask = 1 - mask
+        Macc = inv_mask * (inv_mask > hp.eval_mask_threshold)
+        return Mvox, Macc
+        
 
 
 def build_model():

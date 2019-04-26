@@ -116,7 +116,7 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
     for f in tqdm(files[:hp.num_evals]):
         mix_wav = load_wav(os.path.join(mix_path, f))
         vox_wav = load_wav(os.path.join(vox_path,f))
-        gen_spec, mask = model.generate_eval(device, mix_wav)
+        S = model.generate_specs(device, mix_wav)
         mix_spec = spectrogram(mix_wav, power=hp.mix_power_factor)[0]
         vox_spec = spectrogram(vox_wav, power=hp.vox_power_factor)[0]
         file_id = f.split(".")[0]
@@ -132,11 +132,11 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
 
         plt.subplot(223)
         plt.title("Generated Mask")
-        show_spec(mask)
+        show_spec(S["mask"]["vocals"])
 
         plt.subplot(224)
         plt.title("Applied Mask")
-        show_spec(gen_spec)
+        show_spec(S["spec"]["vocals"])
 
         plt.tight_layout()
         plt.savefig(fig_path)
@@ -284,9 +284,6 @@ if __name__=="__main__":
     test_path = os.path.join(data_root, "test")
     with open(os.path.join(test_path, "test_spec_info.pkl"), 'rb') as f:
         test_spec_info = pickle.load(f)
-    #split = int(len(spec_info)*hp.train_test_split)
-    #test_specs = spec_info[:split]
-    #train_specs = spec_info[split:]
     test_specs = test_spec_info
     train_specs = spec_info
     trainset = SpectrogramDataset(data_root, train_specs)
