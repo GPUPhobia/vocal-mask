@@ -47,7 +47,7 @@ def train_loop(device, model, trainloader, optimizer):
     model.train()
     min_lr = -5
     max_lr = -2
-    n_iters = 100
+    n_iters = 200
     lrs = np.logspace(min_lr, max_lr, n_iters)
     for i, (x, y) in enumerate(tqdm(trainloader)):
         x, y = x.to(device), y.to(device)
@@ -92,10 +92,8 @@ if __name__=="__main__":
     # create dataloaders
     with open(os.path.join(data_root, 'spec_info.pkl'), 'rb') as f:
         spec_info = pickle.load(f)
-    split = int(len(spec_info)*hp.train_test_split)
-    train_specs = spec_info[split:]
+    train_specs = spec_info
     trainset = SpectrogramDataset(data_root, train_specs)
-    print(f"# Training examples: {len(trainset)}")
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=32)
 
 

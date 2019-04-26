@@ -42,7 +42,7 @@ class ResBlock(nn.Module):
         return out
 
 class PreActResBlock(nn.Module):
-    def __init__(self, in_planes, out_planes):
+    def __init__(self, in_planes, out_planes, kernel_size=(3,3)):
         super().__init__()
         if in_planes == out_planes:
             stride = 1
@@ -50,11 +50,12 @@ class PreActResBlock(nn.Module):
         else:
             stride = 2
             self.shortcut = nn.Conv2d(in_planes, out_planes, kernel_size=1, stride=stride, bias=False)
+        padding = list((i//2 for i in kernel_size))
         self.bn1 = nn.BatchNorm2d(in_planes)
         self.bn2 = nn.BatchNorm2d(out_planes)
         self.relu = nn.ReLU(inplace=True)
-        self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
-        self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size, stride=stride, padding=padding, bias=False)
+        self.conv2 = nn.Conv2d(out_planes, out_planes, kernel_size=kernel_size, stride=1, padding=padding, bias=False)
 
     def forward(self, x):
         identity = x
@@ -122,11 +123,11 @@ class ConvNet(nn.Module):
 class ResNet(nn.Module):
     def __init__(self, input_dims, output_dims, res_dims):
         super().__init__()
+        block = PreActResBlock
         in_filters = res_dims[0][0]
         out_filters = res_dims[-1][1]
-        block = PreActResBlock
-        self.conv_in = nn.Conv2d(1, in_filters, kernel_size=(7,3), 
-                                 padding=(3,1), stride=(2,1), bias=False)
+        self.conv_in = nn.Conv2d(1, in_filters, kernel_size=(11,3), 
+                                 padding=(5,1), stride=(2,1), bias=False)
         self.resnet_layers = self._build_layers(res_dims, block)
         self.bn = nn.BatchNorm2d(out_filters)
         self.relu = nn.ReLU(inplace=True)
@@ -141,7 +142,7 @@ class ResNet(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def _build_layers(self, res_dims, block):
-        layers = [block(*dim) for dim in res_dims]
+        layers = [block(*dim, hp.kernel) for dim in res_dims]
         return nn.Sequential(*layers)
 
     def forward(self, x):

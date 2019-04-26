@@ -131,7 +131,7 @@ Sample 5 Spectrograms
 
 ### Quantitative Comparisons
 
-Below are quantitative evaluations of the signal and separation quality based on BSS Eval metrics. Shown are the median SDR values when applying the model to the MusDB18 test set. Higher values indicate better separation and signal quality.
+Below are quantitative evaluations of the signal and separation quality based on [BSS Eval](https://github.com/sigsep/sigsep-mus-eval) metrics. Shown are the median SDR values when applying the model to the MusDB18 test set. Higher values indicate better separation and signal quality. 
 
 | Model | Vocal SDR | Accompaniment SDR |
 |-------------|-----------|----------|
