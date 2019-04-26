@@ -23,8 +23,8 @@ class hparams:
     #
     #----------------
     # model parameters
-    model_type='resnet34'  # convnet or resnet
-    init_conv_kernel = (11, 3)
+    model_type='resnet18'  # convnet or resnet
+    init_conv_kernel = (7, 3)
     kernel = (3, 3)
     # convert target spectrogram to mask at this activity threshold
     mask_threshold = 0.5
@@ -55,9 +55,9 @@ class hparams:
     step_gamma = 0.1
     lr_step_interval = 8000
     # for cyclic learning rate schedule
-    min_lr = 3e-5
+    min_lr = 2e-5
     max_lr = 1e-4
-    cycles_per_epoch = 2
+    cycles_per_epoch = 4
 
     adam_beta1=0.9
     adam_beta2=0.999

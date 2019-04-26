@@ -33,7 +33,7 @@ if parser_type is None:
 
 if parser_type == 'musdb':
     dataset = musdb.DB(root_dir=root_dir, is_wav=True)
-    tracks = dataset.load_mus_tracks(subsets=['train'])
+    tracks = dataset.load_mus_tracks(subsets=['train', 'augment'])
     eval_tracks = dataset.load_mus_tracks(subsets=['test'])
 else:
     dataset = DSD(root_dir=root_dir)
@@ -62,7 +62,8 @@ def load_musdb_sample(track):
     audio = track.audio
     sample_rate = 44100
     #sample_rate = track.rate
-    audio = librosa.to_mono(audio.T)
+    if len(audio.shape) == 2:
+        audio = librosa.to_mono(audio.T)
     if sample_rate != hp.sample_rate:
         audio = librosa.resample(audio, sample_rate, hp.sample_rate)
     return audio

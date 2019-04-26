@@ -212,13 +212,12 @@ class Model(nn.Module):
     def generate_specs(self, device, wav):
         """Generate the vocal-accompaniment separated spectrograms"""
 
-        mask, stft = self.predict_mask(device, wav)
+        mask, mel, stft = self.predict_mask(device, wav)
         Mvox, Macc = self.process_mask(mask)
-        Svox = self.apply_mask(Mvox, stft)
-        Sacc = self.apply_mask(Macc, stft)
         results = {
             "mask": { "vocals": Mvox, "accompaniment": Macc },
-            "spec": { "vocals": Svox, "accompaniment": Sacc }
+            "stft": stft,
+            "spec": mel
         }
         return results
 
@@ -226,9 +225,11 @@ class Model(nn.Module):
         """Generate the vocal-accompaniment separated waveforms"""
 
         S = self.generate_specs(device, wav)
+        Svox = self.apply_mask(S["mask"]["vocals"], S["stft"])
+        Sacc = self.apply_mask(S["mask"]["accompaniment"], S["stft"])
         estimates = {
-            "vocals": inv_spectrogram(S["spec"]["vocals"]),
-            "accompaniment": inv_spectrogram(S["spec"]["accompaniment"])
+            "vocals": inv_spectrogram(Svox),
+            "accompaniment": inv_spectrogram(Sacc)
         }
         return estimates
 
@@ -252,7 +253,7 @@ class Model(nn.Module):
             y = _y.to(torch.device('cpu')).detach().numpy()
             mask.append(y)
         mask = np.vstack(mask).T
-        return mask, stft
+        return mask, mel_spec, stft
 
     def apply_mask(self, mask, stft):
         return stft*mask
