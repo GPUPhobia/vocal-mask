@@ -89,7 +89,7 @@ if __name__=="__main__":
     print("loading model from checkpoint:{}".format(checkpoint_path))
 
     mus = musdb.DB(root_dir=musdb_dir, is_wav=True)
-    tracks = mus.load_mus_tracks()
+    tracks = mus.load_mus_tracks(subsets=['test'])
 
     for track in tracks:
         evaluate(track)

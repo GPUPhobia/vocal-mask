@@ -251,10 +251,11 @@ class Model(nn.Module):
             if hp.mask_at_eval:
                 y = y > hp.eval_mask_threshold
                 yb = y <= hp.eval_mask_threshold
+            else:
+                y = y*(y > hp.noise_gate)
+                yb = y <= hp.noise_gate
             z = stft[:,i]*y
             zb = stft[:,i]*yb
-            if not hp.mask_at_eval:
-                z = z*(z > hp.noise_gate)
             output_vox.append(z)
             output_bg.append(zb)
         S_vox = np.vstack(output_vox).T
