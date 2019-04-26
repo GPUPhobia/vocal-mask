@@ -136,7 +136,7 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
 
         plt.subplot(224)
         plt.title("Applied Mask")
-        show_spec(S["spec"]["vocals"])
+        show_spec(S["mask"]["vocals"]*S["spec"])
 
         plt.tight_layout()
         plt.savefig(fig_path)
@@ -210,7 +210,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             avg_loss = running_loss / (i+1)
             global_step += 1
             if global_step % hp.train_loss_every_step == 0:
-                train_losses.append((global_step, loss.item()))
+                train_losses.append((global_step, loss.detach().item()))
 
             if global_step % 1000 == 0:
                 discordhook.send_message(f"Step:{global_step}, lr:{current_lr}, training loss:{loss.item():.6f}")
@@ -220,7 +220,8 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
 
             # Validation
             if global_step != 0 and global_step % hp.valid_every_step == 0:
-                avg_valid_loss = validation_step(device, model, testloader, criterion)
+                with torch.no_grad():
+                    avg_valid_loss = validation_step(device, model, testloader, criterion)
                 valid_losses.append((global_step, avg_valid_loss))
                 msg = (f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
                 print(msg)
@@ -231,7 +232,8 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
 
         # Evaluation
         if global_epoch % hp.eval_every_epoch == 0:
-            evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
+            with torch.no_grad():
+                evaluate_model(device, model, eval_dir, checkpoint_dir, global_epoch)
     
         global_epoch += 1
 
@@ -289,7 +291,8 @@ if __name__=="__main__":
     trainset = SpectrogramDataset(data_root, train_specs)
     testset = SpectrogramDataset(test_path, test_specs)
     random.shuffle(testset.metadata)
-    testset.metadata = testset.metadata[:hp.validation_size]
+    if hp.validation_size is not None:
+        testset.metadata = testset.metadata[:hp.validation_size]
     print(f"# Training examples: {len(trainset)}")
     print(f"# Validation examples: {len(testset)}")
     trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
