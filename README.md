@@ -70,20 +70,20 @@ The window size can be modified with `hparams.stft_frames`. Larger window sizes 
 ```python generate.py <path to checkpoint file (*.pth)> <path to mixture wav>```  
 
 This will generate a vocal wav file in the `generated` directory. Below are the parameters in `hparams.py` that control how the mask is applied during inference.
-- `hparams.mask_at_eval` - If `True`, the model output will be converted to a binary mask. If `False`, it will be left as a softmask with values in the range (0,1). 
-- `hparams.eval_mask_threshold` - If `mask_at_eval` is `True`, use this to set the masking threshold. Range (0,1). Lower values will allow more audio through, but may also let some instrumentation through as well.
+- `hparams.mask_at_eval` - If `True`, the model output will be converted to a binary mask. If `False`, it will be left as a softmask with values in the range (0,1).  
+- `hparams.eval_mask_threshold` - Range (0,1). Lower values will allow more audio through, but may also let some instrumentation through as well. Values below this threshold will be set to 0.  
 
 ## Results
 
 ### Training
 
-A cyclic learning rate scheduler was used to train the model. A learning rate finder was used find reasonable learning rate boundaries [5]. Based on the plot below, the learning range was selected to be from 5e-5 to 2e-4.
+A cyclic learning rate scheduler was used to train the model. A learning rate finder was used find reasonable learning rate boundaries [5]. Based on the plot below, the learning range was selected to be from 3e-5 to 1e-4.
 
 <p align="center">
     <img src="assets/lr_find.png"/>
 </p>
 
-The model was trained for about 4 epochs in total - further training did not improve the validation loss.
+The model was trained for 4 epochs in total - further training did not improve the validation loss.
 
 <p align="center">
     <img src="assets/training_loss.png"/>
@@ -102,11 +102,11 @@ Audio examples were taken from [here](http://jordipons.me/apps/end-to-end-music-
 
 | Mixture | Wave-U-Net | DeepConvSep | Vocal-Mask | Ground Truth |
 |--------------------------------------------------------------------------------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-| [Sample 1](https://drive.google.com/open?id=1ZO4g_1R3W1fVodf9RouIdywGIIAVJpvs) | [Sample 1](https://drive.google.com/open?id=1A1w2CKLJCrEX34VPRG1Yun5Hppgias1S) | [Sample 1](https://drive.google.com/open?id=18VOe6ADNbFN7KibjctGmKPwJ5UXleg7Y) | [Sample 1](https://drive.google.com/open?id=16u4i3a0uQuqTSkXP2YBC40JYr2VBxzwT) | [Sample 1](https://drive.google.com/open?id=1EBcu9BbGcXvAwgBHlkbRTmH-j97XLNGy) |
-| [Sample 2](https://drive.google.com/open?id=1alGKLhc0J8yc_8P4GpBgns0DRtJMcFP4) | [Sample 2](https://drive.google.com/open?id=1y2LiTnpf4khqqVQWEs_llHrwR9j8BWAy) | [Sample 2](https://drive.google.com/open?id=1ZSH0R6s5K3kAO3VW_5cR79xu8mxNpdtW) | [Sample 2](https://drive.google.com/open?id=1yHYiZPfLoaLnhXtvHOlz3BKyWNwUEU8H) | [Sample 2](https://drive.google.com/open?id=1Vh3mKoC1fddg-6142pggoBreCCla7dCg) |
-| [Sample 3](https://drive.google.com/open?id=1GHGi8i-eRXNEnk88-iLxyOYa0uz8KDlM) | [Sample 3](https://drive.google.com/open?id=1tf1l4yJh8GG_o3pejD5TZm3s8Dw4IrZP) | [Sample 3](https://drive.google.com/open?id=1ND9H6Det-yWDjjhwEzZjjgflBQWyeN2W) | [Sample 3](https://drive.google.com/open?id=196va9Kz493MpKcn4msbfvrAsmswOhcFL) | [Sample 3](https://drive.google.com/open?id=1FiJIm1o3Iz6R52W8oDd2nMTH2INyPzDy) |
-| [Sample 4](https://drive.google.com/open?id=1l8wmEc_6yd32VPUYDYOUFZINqtK-Eif4) | [Sample 4](https://drive.google.com/open?id=1BZJDfQWgqJs_s-QWoU0DM4Ma1JZKPBYL) | [Sample 4](https://drive.google.com/open?id=1etJQe4R3lo47nV4GhgXOyBlsUGVLcw0c) | [Sample 4](https://drive.google.com/open?id=1_6Bs1sSxPMO1InelVyo49OsQ4nEK8Zsj) | [Sample 4](https://drive.google.com/open?id=1sok6Pd3MweEw0LDJ8TWG8CxprxPr6pia) |
-| [Sample 5](https://drive.google.com/open?id=1wHpW9AxXDg-BZMyxc4XndCHDgkZ5zaL7) | [Sample 5](https://drive.google.com/open?id=1ENCfiPg--AAF3cDRgN9_ebRR4v-W_QYF) | [Sample 5](https://drive.google.com/open?id=19bQGqkKEbHjYrQ-_VB0TqaSORVmu1xGu) | [Sample 5](https://drive.google.com/open?id=1K1ztdEJo46WCwkmEAY6APTRHA88uPxNJ) | [Sample 5](https://drive.google.com/open?id=1Nr1oCb2NE0qZepbkBpJ6oR_6fDxbGvqW) |
+| [Sample 1](https://drive.google.com/open?id=1ZO4g_1R3W1fVodf9RouIdywGIIAVJpvs) | [Sample 1](https://drive.google.com/open?id=1A1w2CKLJCrEX34VPRG1Yun5Hppgias1S) | [Sample 1](https://drive.google.com/open?id=18VOe6ADNbFN7KibjctGmKPwJ5UXleg7Y) | [Sample 1](https://drive.google.com/open?id=1pB0fPbTGTLkTqoJAU1Sl-ueTLKf3k998) | [Sample 1](https://drive.google.com/open?id=1EBcu9BbGcXvAwgBHlkbRTmH-j97XLNGy) |
+| [Sample 2](https://drive.google.com/open?id=1alGKLhc0J8yc_8P4GpBgns0DRtJMcFP4) | [Sample 2](https://drive.google.com/open?id=1y2LiTnpf4khqqVQWEs_llHrwR9j8BWAy) | [Sample 2](https://drive.google.com/open?id=1ZSH0R6s5K3kAO3VW_5cR79xu8mxNpdtW) | [Sample 2](https://drive.google.com/open?id=1ok-RYUMKqeXPBjXCSNlSDcEUc6i-jU9p) | [Sample 2](https://drive.google.com/open?id=1Vh3mKoC1fddg-6142pggoBreCCla7dCg) |
+| [Sample 3](https://drive.google.com/open?id=1GHGi8i-eRXNEnk88-iLxyOYa0uz8KDlM) | [Sample 3](https://drive.google.com/open?id=1tf1l4yJh8GG_o3pejD5TZm3s8Dw4IrZP) | [Sample 3](https://drive.google.com/open?id=1ND9H6Det-yWDjjhwEzZjjgflBQWyeN2W) | [Sample 3](https://drive.google.com/open?id=1LKnxlwuCOxojQ1nDOvFnLuxqtyHmf5zL) | [Sample 3](https://drive.google.com/open?id=1FiJIm1o3Iz6R52W8oDd2nMTH2INyPzDy) |
+| [Sample 4](https://drive.google.com/open?id=1l8wmEc_6yd32VPUYDYOUFZINqtK-Eif4) | [Sample 4](https://drive.google.com/open?id=1BZJDfQWgqJs_s-QWoU0DM4Ma1JZKPBYL) | [Sample 4](https://drive.google.com/open?id=1etJQe4R3lo47nV4GhgXOyBlsUGVLcw0c) | [Sample 4](https://drive.google.com/open?id=15OlwExrmH_tg2IMbudr2vgnx1QjbRuUs) | [Sample 4](https://drive.google.com/open?id=1sok6Pd3MweEw0LDJ8TWG8CxprxPr6pia) |
+| [Sample 5](https://drive.google.com/open?id=1wHpW9AxXDg-BZMyxc4XndCHDgkZ5zaL7) | [Sample 5](https://drive.google.com/open?id=1ENCfiPg--AAF3cDRgN9_ebRR4v-W_QYF) | [Sample 5](https://drive.google.com/open?id=19bQGqkKEbHjYrQ-_VB0TqaSORVmu1xGu) | [Sample 5](https://drive.google.com/open?id=1jybq2alNjNmghQRIjKL_P_PiscRhzwAz) | [Sample 5](https://drive.google.com/open?id=1Nr1oCb2NE0qZepbkBpJ6oR_6fDxbGvqW) |
 
 ### Spectrogram Comparisons  
 Note: The Ground Truth, Wave-U-Net, and DeepConvSep samples have lower sample rate, so the spectrogram is cut off above 4096Hz. 
