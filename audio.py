@@ -35,18 +35,19 @@ def inv_preemphasis(x):
 
 def spectrogram(y, power):
     global _mel_freqs
+    stftS = librosa.stft(y, n_fft=hparams.fft_size, hop_length=hparams.hop_size)
     if hparams.use_preemphasis:
         y = preemphasis(y)
     S = librosa.stft(y, n_fft=hparams.fft_size, hop_length=hparams.hop_size)
     if _mel_freqs is None:
         _mel_freqs = librosa.mel_frequencies(S.shape[0], fmin=hparams.fmin)
     _S = librosa.perceptual_weighting(np.abs(S)**power, _mel_freqs, ref=hparams.ref_level_db)
-    return _normalize(_S - hparams.ref_level_db), S
+    return _normalize(_S - hparams.ref_level_db), stftS
 
 def inv_spectrogram(S):
     y = librosa.istft(S, hop_length=hparams.hop_size)
-    if hparams.use_preemphasis:
-        return inv_preemphasis(y)
+    #if hparams.use_preemphasis:
+    #    return inv_preemphasis(y)
     return y
     
 

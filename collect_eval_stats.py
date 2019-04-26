@@ -10,9 +10,10 @@ from docopt import docopt
 import glob
 import json
 import os
+import numpy as np
 
-def compute_metrics(eval_path):
-    files = glob.glob(os.path.join(eval_path, "*.json"))
+def compute_metrics(eval_path, compute_averages=True, metric="SDR"):
+    files = glob.glob(eval_path)
     inst_list = None
     print("Found " + str(len(files)) + " JSON files to evaluate...")
     for path in files:
@@ -40,5 +41,5 @@ def compute_metrics(eval_path):
 if __name__=="__main__":
     args = docopt(__doc__)
     bss_eval_dir = args["<bss-eval-dir>"]
-    metrics = compute_metrics(os.path.join(bss_eval_dir,"*"))
+    metrics = compute_metrics(os.path.join(bss_eval_dir,"*.json"))
     print(metrics)
