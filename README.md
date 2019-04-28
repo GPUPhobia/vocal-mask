@@ -144,7 +144,7 @@ Below are quantitative evaluations of the signal and separation quality based on
 |-------------|-----------|----------|
 | DeepConvSep | 2.37 | N/A |
 | Wave-U-Net | 4.60 | 11.87 |
-| Vocal-Mask (ResNet18) | 3.66 | 6.29 |
+| Vocal-Mask (ResNet18) | 3.66 | 7.34 |
 
 ## Discussion  
 
