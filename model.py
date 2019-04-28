@@ -239,9 +239,9 @@ class Model(nn.Module):
         """
 
         self.eval()
-        mel_spec, stft = spectrogram(wav, power=hp.mix_power_factor)
+        _mel_spec, stft = spectrogram(wav, power=hp.mix_power_factor)
         padding = hp.stft_frames//2
-        mel_spec = np.pad(mel_spec, ((0,0),(padding,padding)), 'constant', constant_values=0) 
+        mel_spec = np.pad(_mel_spec, ((0,0),(padding,padding)), 'constant', constant_values=0) 
         window = hp.stft_frames
         size = mel_spec.shape[1]
         mask = []
@@ -253,7 +253,7 @@ class Model(nn.Module):
             y = _y.to(torch.device('cpu')).detach().numpy()
             mask.append(y)
         mask = np.vstack(mask).T
-        return mask, mel_spec, stft
+        return mask, _mel_spec, stft
 
     def apply_mask(self, mask, stft):
         return stft*mask

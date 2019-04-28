@@ -213,7 +213,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
                 train_losses.append((global_step, loss.detach().item()))
 
             if global_step % 1000 == 0:
-                discordhook.send_message(f"Step:{global_step}, lr:{current_lr}, training loss:{loss.item():.6f}")
+                discordhook.send_message(f"Step:{global_step}, lr:{current_lr:.6f}, training loss:{loss.item():.6f}")
             # save checkpoint
             if global_step != 0 and global_step % hp.save_every_step == 0:
                 save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
@@ -223,7 +223,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
                 with torch.no_grad():
                     avg_valid_loss = validation_step(device, model, testloader, criterion)
                 valid_losses.append((global_step, avg_valid_loss))
-                msg = (f"Step:{global_step}, lr:{current_lr}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
+                msg = (f"Step:{global_step}, lr:{current_lr:.6f}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
                 print(msg)
                 discordhook.send_message(msg)
 
@@ -295,8 +295,8 @@ if __name__=="__main__":
         testset.metadata = testset.metadata[:hp.validation_size]
     print(f"# Training examples: {len(trainset)}")
     print(f"# Validation examples: {len(testset)}")
-    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.batch_size)
-    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=hp.test_batch_size)
+    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=4, batch_size=hp.batch_size)
+    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=4, batch_size=hp.test_batch_size)
 
 
     # main train loop
