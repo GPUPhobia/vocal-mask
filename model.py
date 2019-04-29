@@ -272,10 +272,8 @@ class Model(nn.Module):
 
     def get_soft_mask(self, mask):
         Mvox = mask * (mask > hp.eval_mask_threshold)
-        Mvox = Mvox/np.max(Mvox)
         inv_mask = 1 - mask
         Macc = inv_mask * (inv_mask > hp.eval_mask_threshold)
-        Macc = Macc/np.max(Macc)
         return Mvox, Macc
         
 
