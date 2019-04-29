@@ -25,6 +25,7 @@ from torch import nn
 import torch.nn.functional as F
 from torch import optim
 from torch.utils.data import DataLoader
+from adamW import AdamW
 
 from audio import *
 from model import build_model
@@ -143,21 +144,33 @@ def evaluate_model(device, model, path, checkpoint_dir, global_epoch):
         plt.close('all')
 
 
-def validation_step(device, model, testloader, criterion):
+def validation_step(device, model, iter_testloader, criterion):
     """check loss on validation set
+    """
+
+    model.eval()
+    with torch.no_grad():
+        x, y = next(iter_testloader)
+        x, y = x.to(device), y.to(device)
+        y_pred = model(x)
+        loss = criterion(y_pred, y)
+    return loss.item()
+
+def validation(device, model, testloader, criterion):
+    """check loss on entire validation set
     """
 
     model.eval()
     print("")
     running_loss = 0
-    for i, (x, y) in enumerate(tqdm(testloader)):
-        x, y = x.to(device), y.to(device)
-        y_pred = model(x)
-        loss = criterion(y_pred, y)
-        running_loss += loss.item()
-        avg_loss = running_loss / (i+1)
+    with torch.no_grad():
+        for i, (x, y) in enumerate(tqdm(testloader)):
+            x, y = x.to(device), y.to(device)
+            y_pred = model(x)
+            loss = criterion(y_pred, y)
+            running_loss += loss.item()
+            avg_loss = running_loss / (i+1)
     return avg_loss
-
 
 def get_learning_rate(global_step, n_iters):
     if hp.fix_learning_rate:
@@ -170,6 +183,17 @@ def get_learning_rate(global_step, n_iters):
         cycle = np.floor(1 + global_step/(2*step_size))
         x = abs(global_step/step_size - 2*cycle + 1)
         current_lr = hp.min_lr + (hp.max_lr - hp.min_lr)*max(0, (1-x))
+    elif hp.lr_schedule_type == 'one-cycle':
+        max_iters = n_iters*hp.nepochs
+        cycle_width = int(max_iters*0.9)
+        step_size = cycle_width//2
+        if global_step < cycle_width:
+            cycle = np.floor(1 + global_step/(2*step_size))
+            x = abs(global_step/step_size - 2*cycle + 1)
+            current_lr = hp.min_lr + (hp.max_lr - hp.min_lr)*max(0, (1-x))
+        else:
+            x = (max_iters - global_step)/(max_iters - cycle_width)
+            current_lr = 0.01*hp.min_lr + 0.99*hp.min_lr*x
     else:
         current_lr = noam_learning_rate_decay(hp.initial_learning_rate, 
                     global_step, hp.noam_warm_up_steps)
@@ -186,10 +210,11 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
     global global_step, global_epoch, global_test_step, train_losses, valid_losses
     n_iters = int(np.ceil(len(trainloader.dataset)/hp.batch_size))
     while global_epoch < hp.nepochs:
+        iter_testloader = iter(testloader)
         running_loss = 0
-        model.train()
         print(f"[Epoch {global_epoch}]")
         for i, (x, y) in enumerate(tqdm(trainloader)):
+            model.train()
             x, y = x.to(device), y.to(device)
             y_pred = model(x)
             loss = criterion(y_pred, y)
@@ -206,29 +231,33 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
             nn.utils.clip_grad_norm_(model.parameters(), hp.grad_norm)
             optimizer.step()
 
-            running_loss += loss.item()
+            train_loss = loss.item()
+            running_loss += train_loss
             avg_loss = running_loss / (i+1)
-            global_step += 1
-            if global_step % hp.train_loss_every_step == 0:
-                train_losses.append((global_step, loss.detach().item()))
+            train_losses.append((global_step, loss.detach().item()))
+            try:
+                valid_loss = validation_step(device, model, iter_testloader, criterion)
+            except StopIteration:
+                iter_testloader = iter(testloader)
+                valid_loss = validation_step(device, model, iter_testloader, criterion)
+            valid_losses.append((global_step, valid_loss))
 
-            if global_step % 1000 == 0:
-                discordhook.send_message(f"Step:{global_step}, lr:{current_lr:.6f}, training loss:{loss.item():.6f}")
+            if global_step % hp.send_loss_every_step == 0:
+                discordhook.send_message(f"Step:{global_step}, lr:{current_lr:.6e}, training loss:{train_loss:.6f}, valid loss:{valid_loss:.6f}")
+
             # save checkpoint
             if global_step != 0 and global_step % hp.save_every_step == 0:
                 save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
 
-            # Validation
-            if global_step != 0 and global_step % hp.valid_every_step == 0:
-                with torch.no_grad():
-                    avg_valid_loss = validation_step(device, model, testloader, criterion)
-                valid_losses.append((global_step, avg_valid_loss))
-                msg = (f"Step:{global_step}, lr:{current_lr:.6f}, training loss:{avg_loss:.6f}, validation loss:{avg_valid_loss:.6f}")
-                print(msg)
-                discordhook.send_message(msg)
+            global_step += 1
 
         # save checkpoint
         save_checkpoint(device, model, optimizer, global_step, checkpoint_dir, global_epoch)
+
+        # Validation
+        avg_valid_loss = validation(device, model, testloader, criterion)
+        msg = (f"Step:{global_step}, lr:{current_lr:.6e}, avg training loss:{avg_loss:.6f}, avg valid loss:{avg_valid_loss:.6f}")
+        discordhook.send_message(msg)
 
         # Evaluation
         if global_epoch % hp.eval_every_epoch == 0:
@@ -255,7 +284,7 @@ if __name__=="__main__":
 
     # build model, create optimizer
     model = build_model().to(device)
-    optimizer = optim.Adam(model.parameters(),
+    optimizer = AdamW(model.parameters(),
                            lr=hp.initial_learning_rate, betas=(
         hp.adam_beta1, hp.adam_beta2),
         eps=hp.adam_eps, weight_decay=hp.weight_decay,
@@ -269,6 +298,8 @@ if __name__=="__main__":
         print("using noam learning rate decay")
     elif hp.lr_schedule_type == 'cyclic':
         print("using cyclic learning rate")
+    elif hp.lr_schedule_type == 'one-cycle':
+        print('using one-cycle learning rate')
 
     # load checkpoint
     if checkpoint_path is None:
@@ -295,8 +326,8 @@ if __name__=="__main__":
         testset.metadata = testset.metadata[:hp.validation_size]
     print(f"# Training examples: {len(trainset)}")
     print(f"# Validation examples: {len(testset)}")
-    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=4, batch_size=hp.batch_size)
-    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=4, batch_size=hp.test_batch_size)
+    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=2, batch_size=hp.batch_size)
+    testloader = DataLoader(testset, collate_fn=basic_collate, shuffle=True, num_workers=2, batch_size=hp.test_batch_size)
 
 
     # main train loop

@@ -2,7 +2,7 @@ class hparams:
 
     #--------------     
     # audio processing parameters
-    fmin = 125
+    fmin = 20
     fft_size = 1024
     stft_frames = 25
     stft_stride = 1
@@ -37,32 +37,31 @@ class hparams:
     #----------------
     # training parameters
     batch_size = 256
-    test_batch_size = 32
-    nepochs = 50
-    train_loss_every_step = 100
-    valid_every_step = 7517
-    save_every_step = 7517
+    test_batch_size = 128
+    nepochs = 1
+    send_loss_every_step = 500
+    save_every_step = 2000
     eval_every_epoch = 1
     num_evals = 4  # number of evals to generate
-    validation_size = 256000
+    validation_size = None
     grad_norm = 10
     #learning rate parameters
     initial_learning_rate=1e-4
-    lr_schedule_type = 'cyclic' # or 'noam'
+    lr_schedule_type = 'one-cycle' # or 'noam' or 'step'
     # for noam learning rate schedule
     noam_warm_up_steps = 2000 * (batch_size // 16)
     # for step learning rate schedule
-    step_gamma = 0.1
-    lr_step_interval = 8000
+    step_gamma = 0.5
+    lr_step_interval = 3000
     # for cyclic learning rate schedule
-    min_lr = 2e-5
-    max_lr = 1e-4
+    min_lr = 1e-4
+    max_lr = 3e-3
     cycles_per_epoch = 4
 
     adam_beta1=0.9
-    adam_beta2=0.999
+    adam_beta2=0.99
     adam_eps=1e-8
     amsgrad=False
-    weight_decay = 0.0
+    weight_decay = 0.3
     fix_learning_rate = None  # Use one of the learning rate schedules if not None
     #-----------------

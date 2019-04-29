@@ -23,6 +23,7 @@ from torch import nn
 import torch.nn.functional as F
 from torch import optim
 from torch.utils.data import DataLoader
+from adamW import AdamW
 
 from audio import *
 from model import build_model
@@ -45,8 +46,8 @@ def train_loop(device, model, trainloader, optimizer):
     global global_step, global_epoch, global_test_step
     train_losses = []
     model.train()
-    min_lr = -5
-    max_lr = -2
+    min_lr = -6
+    max_lr = 0
     n_iters = 200
     lrs = np.logspace(min_lr, max_lr, n_iters)
     for i, (x, y) in enumerate(tqdm(trainloader)):
@@ -82,7 +83,7 @@ if __name__=="__main__":
 
     # build model, create optimizer
     model = build_model().to(device)
-    optimizer = optim.Adam(model.parameters(),
+    optimizer = AdamW(model.parameters(),
                            lr=hp.initial_learning_rate, betas=(
         hp.adam_beta1, hp.adam_beta2),
         eps=hp.adam_eps, weight_decay=hp.weight_decay,
@@ -94,7 +95,7 @@ if __name__=="__main__":
         spec_info = pickle.load(f)
     train_specs = spec_info
     trainset = SpectrogramDataset(data_root, train_specs)
-    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=0, batch_size=32)
+    trainloader = DataLoader(trainset, collate_fn=basic_collate, shuffle=True, num_workers=6, batch_size=32)
 
 
     # main train loop
