@@ -31,14 +31,18 @@ def load_checkpoint(path):
     valid_losses = checkpoint["valid_losses"]
     return train_losses, valid_losses
 
+def thin_losses(losses, factor):
+    return [i for i in losses if i[0]%factor == 0]
+
 def plot_loss(train_losses, valid_losses):
-    print(sorted(valid_losses, key=lambda x: x[1]))
     plt.figure()
     plt.title("Binary Cross Entropy Loss")
+    train_losses = thin_losses(train_losses, 10)
+    valid_losses = thin_losses(valid_losses, 10)
     trainX, trainY = zip(*train_losses)
     validX, validY = zip(*valid_losses)
-    plt.plot(trainX, trainY, label="Training")
-    plt.plot(validX, validY, label="Validation")
+    plt.plot(trainX, trainY, label="Training", linewidth=0.5)
+    plt.plot(validX, validY, label="Validation", linewidth=0.5)
     plt.xlabel("Iterations")
     plt.ylabel("Loss")
     plt.legend()
