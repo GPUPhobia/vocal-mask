@@ -10,7 +10,9 @@ from scipy.io import wavfile
 
 
 def load_wav(path):
-    wav = librosa.load(path, sr=hparams.sample_rate)[0]
+    wav = librosa.load(path, sr=hparams.sample_rate, mono=False)[0]
+    if len(wav.shape) == 2:
+        wav = 0.5*(wav[0] + wav[1])
     return wav
 
 def get_wav_slices(wav, window, stride):

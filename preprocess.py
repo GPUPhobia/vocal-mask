@@ -31,7 +31,8 @@ def load_musdb_sample(track):
     sample_rate = 44100
     #sample_rate = track.rate
     if len(audio.shape) == 2:
-        audio = librosa.to_mono(audio.T)
+        #audio = librosa.to_mono(audio.T)
+        audio = 0.5*(audio.T[0] + audio.T[1])
     if sample_rate != hp.sample_rate:
         audio = librosa.resample(audio, sample_rate, hp.sample_rate)
     return audio
@@ -103,7 +104,7 @@ if __name__=="__main__":
         eval_tracks = tracks[:8]
         tracks = tracks[8:]
 
-    #os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
     mixture_path = os.path.join(output_dir, "mix")
     vocal_path = os.path.join(output_dir, "vox")
     eval_path = os.path.join(output_dir, "eval")
@@ -114,19 +115,18 @@ if __name__=="__main__":
     test_vox_path = os.path.join(test_path,"vox")
     os.makedirs(mixture_path, exist_ok=True)
     os.makedirs(vocal_path, exist_ok=True)
-    #os.makedirs(eval_mix_path, exist_ok=True)
-    #os.makedirs(eval_vox_path, exist_ok=True)
-    #os.makedirs(test_mix_path, exist_ok=True)
-    #os.makedirs(test_vox_path, exist_ok=True)
+    os.makedirs(eval_mix_path, exist_ok=True)
+    os.makedirs(eval_vox_path, exist_ok=True)
+    os.makedirs(test_mix_path, exist_ok=True)
+    os.makedirs(test_vox_path, exist_ok=True)
 
     print("processing training examples")
     train_info_path = os.path.join(output_dir, "spec_info.pkl")
     process_tracks(tracks, mixture_path, vocal_path, train_info_path)
-    quit()
 
     print("processing validation examples")
     test_info_path = os.path.join(test_path, "test_spec_info.pkl")
-    process_tracks(tracks, test_mix_path, test_vox_path, test_info_path)
+    process_tracks(eval_tracks, test_mix_path, test_vox_path, test_info_path)
 
     i = 0
     print("slicing eval samples")
