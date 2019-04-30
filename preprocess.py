@@ -31,8 +31,7 @@ def load_musdb_sample(track):
     sample_rate = 44100
     #sample_rate = track.rate
     if len(audio.shape) == 2:
-        #audio = librosa.to_mono(audio.T)
-        audio = 0.5*(audio.T[0] + audio.T[1])
+        audio = librosa.to_mono(audio.T)
     if sample_rate != hp.sample_rate:
         audio = librosa.resample(audio, sample_rate, hp.sample_rate)
     return audio
