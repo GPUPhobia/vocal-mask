@@ -246,12 +246,13 @@ class Model(nn.Module):
         size = mel_spec.shape[1]
         mask = []
         end = size - window
-        for i in tqdm(range(0, end+1)):
-            x = mel_spec[:,i:i+window]
-            _x = torch.FloatTensor(x[np.newaxis,np.newaxis,:,:]).to(device)
+        for i in tqdm(range(0, end+1, hp.test_batch_size)):
+            x = [mel_spec[:,j:j+window] for j in range(i, i+hp.test_batch_size) if j <= end]
+            x = np.stack(x)
+            _x = torch.FloatTensor(x[:,np.newaxis,:,:]).to(device)
             _y = self.forward(_x)
             y = _y.to(torch.device('cpu')).detach().numpy()
-            mask.append(y)
+            mask += [y[j] for j in range(y.shape[0])]
         mask = np.vstack(mask).T
         return mask, _mel_spec, stft
 

@@ -66,9 +66,9 @@ def evaluate(track):
     resize(estimates, mix_audio)
     if mix_channels > 1:
         replicate_channels(estimates, mix_channels)
-    scores = museval.eval_mus_track(
-        track, estimates, output_dir='bss_evals')
-    print(scores)
+    #scores = museval.eval_mus_track(
+    #    track, estimates, output_dir='bss_evals')
+    #print(scores)
     return estimates
 
 
@@ -89,7 +89,6 @@ if __name__=="__main__":
     print("loading model from checkpoint:{}".format(checkpoint_path))
 
     mus = musdb.DB(root_dir=musdb_dir, is_wav=True)
-    tracks = mus.load_mus_tracks(subsets=['test'])
+    mus.run(evaluate, subsets="test", estimates_dir="estimates")
 
-    for track in tracks:
-        evaluate(track)
+    museval.eval_mus_dir(dataset=mus, estimates_dir="estimates", output_dir="bss_evals", subsets="test", parallel=True, is_wav=True)

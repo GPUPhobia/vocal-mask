@@ -4,7 +4,7 @@ usage: generate.py [options] <checkpoint-path> <input-wav>
 
 options:
     --output-dir=<dir>      Directory where to save output wav [default: generated].
-    --sr                    Sample rate of generated waveform
+    --sr=<sr>               Sample rate of generated waveform
     -h, --help                  Show this help message and exit
 """
 from docopt import docopt
@@ -17,6 +17,7 @@ from tqdm import tqdm
 import numpy as np
 import librosa
 import librosa.display
+import librosa.output
 
 import torch
 
@@ -51,8 +52,8 @@ def generate(device, model, path, output_dir, target_sr):
     file_id = path.split('/')[-1].split('.')[0]
     vox_outpath = os.path.join(output_dir, f'{file_id}_vocals.wav')
     bg_outpath = os.path.join(output_dir, f'{file_id}_accompaniment.wav')
-    save_wav(estimates['vocals'], vox_outpath)
-    save_wav(estimates['accompaniment'], bg_outpath)
+    save_wav(estimates['vocals'], vox_outpath, sr=target_sr)
+    save_wav(estimates['accompaniment'], bg_outpath, sr=target_sr)
     
 
 if __name__=="__main__":
@@ -66,6 +67,8 @@ if __name__=="__main__":
         output_dir = 'generated'
     if target_sr is None:
         target_sr = hp.sample_rate
+    else:
+        target_sr = int(target_sr)
 
     # make dirs, load dataloader and set up device
     os.makedirs(output_dir, exist_ok=True)
