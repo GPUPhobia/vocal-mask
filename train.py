@@ -178,14 +178,9 @@ def get_learning_rate(global_step, n_iters):
     elif hp.lr_schedule_type == 'step':
         current_lr = step_learning_rate_decay(hp.initial_learning_rate, 
                     global_step, hp.step_gamma, hp.lr_step_interval)
-    elif hp.lr_schedule_type == 'cyclic':
-        step_size = n_iters//(2*hp.cycles_per_epoch)
-        cycle = np.floor(1 + global_step/(2*step_size))
-        x = abs(global_step/step_size - 2*cycle + 1)
-        current_lr = hp.min_lr + (hp.max_lr - hp.min_lr)*max(0, (1-x))
     elif hp.lr_schedule_type == 'one-cycle':
         max_iters = n_iters*hp.nepochs
-        cycle_width = int(max_iters*0.9)
+        cycle_width = int(max_iters*hp.fine_tune)
         step_size = cycle_width//2
         if global_step < cycle_width:
             cycle = np.floor(1 + global_step/(2*step_size))
@@ -212,6 +207,7 @@ def train_loop(device, model, trainloader, testloader,  optimizer, checkpoint_di
     while global_epoch < hp.nepochs:
         iter_testloader = iter(testloader)
         running_loss = 0
+        torch.cuda.empty_cache()
         print(f"[Epoch {global_epoch}]")
         for i, (x, y) in enumerate(tqdm(trainloader)):
             model.train()
@@ -296,8 +292,6 @@ if __name__=="__main__":
         print("using exponential learning rate decay")
     elif hp.lr_schedule_type == 'noam':
         print("using noam learning rate decay")
-    elif hp.lr_schedule_type == 'cyclic':
-        print("using cyclic learning rate")
     elif hp.lr_schedule_type == 'one-cycle':
         print('using one-cycle learning rate')
 
