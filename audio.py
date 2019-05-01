@@ -2,6 +2,7 @@ import librosa
 import librosa.effects
 import librosa.feature
 import librosa.filters
+import librosa.output
 import math
 import numpy as np
 from scipy import signal
@@ -10,18 +11,17 @@ from scipy.io import wavfile
 
 
 def load_wav(path):
-    wav = librosa.load(path, sr=hparams.sample_rate, mono=False)[0]
-    if len(wav.shape) == 2:
-        wav = 0.5*(wav[0] + wav[1])
+    wav = librosa.load(path, sr=hparams.sample_rate)[0]
     return wav
 
 def get_wav_slices(wav, window, stride):
     N = len(wav)
     return [(i,i+window) for i in range(0, N-window, stride)]
 
-def save_wav(wav, path):
-    wav = wav * 32767 / max(0.01, np.max(np.abs(wav)))
-    wavfile.write(path, hparams.sample_rate, wav.astype(np.int16))
+def save_wav(wav, path, sr=None):
+    if not sr:
+        sr = hparams.sample_rate
+    librosa.output.write_wav(path, wav, sr=sr)
 
 def show_spec(spec, y_axis='mel'):
     librosa.display.specshow(spec, y_axis=y_axis, x_axis='time')
@@ -35,7 +35,7 @@ def inv_preemphasis(x):
     from nnmnkwii.preprocessing import inv_preemphasis
     return inv_preemphasis(x, hparams.preemphasis)
 
-def spectrogram(y, power):
+def spectrogram(y, power, pcen=False):
     global _mel_freqs
     stftS = librosa.stft(y, n_fft=hparams.fft_size, hop_length=hparams.hop_size)
     if hparams.use_preemphasis:
